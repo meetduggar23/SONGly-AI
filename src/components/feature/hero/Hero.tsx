@@ -36,7 +36,6 @@ export function Hero() {
     error,
     progress,
     detectedSong,
-    seconds,
     startListening,
     cancelListening,
   } = useSongRecognition(onDetected);
@@ -124,22 +123,20 @@ const handleStartListening = () => {
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <motion.div {...staggerItem(0.05)} className="w-full">
 <span className="sr-only">Song Discovery</span>
-              <h1 className="text-4xl font-black leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Find Any Song.
+              <h1 className="text-3xl font-black leading-[1.06] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                What&rsquo;s That Song?
                 <br />
-                <span className="text-gradient-green">Instantly.</span>{" "}
-                <span className="text-primary">By AI.</span>
+                <span className="text-gradient-green">We&rsquo;ll Find It.</span>
               </h1>
-              <p className="mx-auto mt-4 max-w-md text-base text-secondary-text sm:text-lg lg:mx-0">
-                Identify songs playing around you or search for any song by
-                title or artist.
+              <p className="mx-auto mt-3 max-w-md text-sm text-secondary-text sm:text-base lg:mx-0">
+                Identify music in seconds with AI, search millions of songs,
+                and discover your next favorite track.
               </p>
             </motion.div>
 
             <motion.div {...staggerItem(0.15)} className="mt-8 w-full sm:mt-10">
-<ListeningModule
+                <ListeningModule
                 phase={phase}
-                seconds={seconds}
                 progress={progress}
                 detected={detectedSong}
                 onLyrics={handleLyrics}

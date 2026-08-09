@@ -12,6 +12,13 @@ const navItems = [
   { label: "Home", path: "/", icon: Home },
   { label: "Listen", path: "/detect", icon: AudioLines },
   { label: "Trending", path: "/trending", icon: TrendingUp },
+  { label: "About", path: "/about", icon: Info },
+];
+
+const mobileNavItems = [
+  { label: "Home", path: "/", icon: Home },
+  { label: "Listen", path: "/detect", icon: AudioLines },
+  { label: "Trending", path: "/trending", icon: TrendingUp },
   { label: "Favorites", path: "/favorites", icon: Heart },
   { label: "About", path: "/about", icon: Info },
 ];
@@ -26,7 +33,7 @@ function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-all duration-300 hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-secondary-text transition-all hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <motion.span
         key={isDark ? "moon" : "sun"}
@@ -75,6 +82,7 @@ export function Navbar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === "/"}
                 aria-label={item.label}
                 title={item.label}
                 className={({ isActive }) =>
@@ -96,12 +104,27 @@ export function Navbar() {
             <ThemeToggle />
             <button
               onClick={openSearch}
-              className="flex h-10 items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-sm text-secondary-text transition-all hover:border-primary/40 hover:text-primary"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-secondary-text transition-all hover:border-primary/40 hover:text-primary"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">Search…</span>
             </button>
+            <NavLink
+              to="/favorites"
+              end
+              aria-label="Favorites"
+              title="Favorites"
+              className={({ isActive }) =>
+                cn(
+                  "ml-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all",
+                  isActive
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border bg-card text-secondary-text hover:border-primary/40 hover:text-primary",
+                )
+              }
+            >
+              <Heart className="h-4 w-4" />
+            </NavLink>
             {isCompactNavigation && (
               <button
                 onClick={openMobileNav}
@@ -147,7 +170,7 @@ export function Navbar() {
                 </button>
               </div>
               <nav id="mobile-navigation" className="flex flex-col gap-1" aria-label="Mobile">
-                {navItems.map((item) => (
+                {mobileNavItems.map((item) => (
                   <button
                     key={item.path}
                     onClick={() => handleNavClick(item.path)}

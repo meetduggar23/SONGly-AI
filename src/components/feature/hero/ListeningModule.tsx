@@ -9,7 +9,6 @@ export type HeroPhase = RecognitionPhase;
 
 interface ListeningModuleProps {
   phase: HeroPhase;
-  seconds: number;
   progress: number;
   onStart: () => void;
   onCancel: () => void;
@@ -105,7 +104,6 @@ className="h-11 w-11 text-primary-foreground sm:h-12 sm:w-12"
 
 export function ListeningModule({
   phase,
-  seconds,
   progress,
   onStart,
   onCancel,
@@ -216,14 +214,6 @@ active
       <div className="flex flex-col items-center gap-2">
         {phase !== "idle" && !(analyzing && detected) && (
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-1.5 backdrop-blur">
-            {listening && (
-              <>
-                <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                <span className="text-sm font-medium text-foreground">
-                  Listening… {seconds}s
-                </span>
-              </>
-            )}
             {analyzing && !detected && (
               <>
                 <span className="text-sm leading-none">✨</span>
