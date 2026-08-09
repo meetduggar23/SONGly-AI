@@ -257,12 +257,18 @@ export async function getSongDetails(trackId: string): Promise<Song | null> {
 /**
  * Autocomplete suggestions backed by the real search APIs (iTunes first,
  * Deezer as fallback). Results are ranked so exact matches, then prefix
- * matches, outrank loose partial matches.
+ * matches, outrank loose partial matches. The pool mixes the Indian
+ * storefront (Hindi / Bollywood) with the US/GB storefront (international)
+ * so suggestions feel natural, while relevance always wins for specific
+ * artist/song queries.
+ *
+ * The full ranked pool is cached for 5 minutes; `offset`/`limit` slice it so
+ * "load more" pages through results without refetching or repeating songs.
  */
 
-const MAX_SUGGESTIONS = 5;
+const SUGGESTION_PAGE_SIZE = 5;
 const SUGGESTION_CACHE_TTL_MS = 5 * 60 * 1000;
-const suggestionCache = new Map<string, { items: SearchSuggestion[]; fetchedAt: number }>();
+const suggestionCache = new Map<string, { pool: SearchSuggestion[]; fetchedAt: number }>();
 
 const normalize = (s: string) => s.trim().toLocaleLowerCase();
 
@@ -299,71 +305,181 @@ function rankCandidate(
   return 0;
 }
 
-/**
- * Fetch ranked suggestions for the autocomplete dropdown.
- * Queries shorter than 2 characters return no results, and repeated queries
- * are served from an in-memory cache (5 minutes) without hitting the API.
- */
-export async function searchSuggestions(query: string): Promise<SearchSuggestion[]> {
-  const q = normalize(query);
-  if (q.length < 2) return [];
+const toSongSuggestion = (song: Song): SearchSuggestion => ({
+  id: song.id,
+  kind: "song",
+  title: song.title,
+  subtitle: `${song.artist}${song.album ? ` · ${song.album}` : ""}`,
+  cover: song.coverSmall || song.coverMedium || song.cover,
+  song,
+});
 
-  const cached = suggestionCache.get(q);
-  if (cached && Date.now() - cached.fetchedAt < SUGGESTION_CACHE_TTL_MS) {
-    return cached.items;
+const toArtistSuggestion = (artist: Artist): SearchSuggestion => ({
+  id: artist.id,
+  kind: "artist",
+  title: artist.name,
+  subtitle: "Artist",
+  cover: artist.imageSmall || artist.imageMedium || artist.image,
+  artist,
+});
+
+const toAlbumSuggestion = (album: Album): SearchSuggestion => ({
+  id: album.id,
+  kind: "album",
+  title: album.title,
+  subtitle: `${album.artist} · Album`,
+  cover: album.coverSmall || album.coverMedium || album.cover,
+  album,
+});
+
+/** Deduplicate suggestions by their unique id (trackId-based for songs). */
+function dedupeSuggestions(list: SearchSuggestion[]): SearchSuggestion[] {
+  const seen = new Set<string>();
+  const out: SearchSuggestion[] = [];
+  for (const s of list) {
+    const key = `${s.kind}:${s.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
   }
+  return out;
+}
 
-  const [songsRes, artistsRes, albumsRes] = await Promise.allSettled([
-    searchSongs(query, 8),
-    searchArtists(query, 4),
-    searchAlbums(query, 4),
+function artistNameOf(c: SearchSuggestion): string {
+  return c.kind === "song"
+    ? c.song?.artist || ""
+    : c.kind === "artist"
+      ? c.artist?.name || ""
+      : c.album?.artist || "";
+}
+
+interface RankedCandidate {
+  c: SearchSuggestion;
+  score: number;
+}
+
+function rankList(q: string, list: SearchSuggestion[]): RankedCandidate[] {
+  return list
+    .map((c) => ({ c, score: rankCandidate(q, c.title, artistNameOf(c)) }))
+    .filter((e) => e.score > 0)
+    .sort((a, b) => b.score - a.score || a.c.title.localeCompare(b.c.title));
+}
+
+/**
+ * Merge the Indian and international song pools into one relevance-ordered
+ * list with a natural Hindi + English mix: an international track that scores
+ * close to a primary hit is interleaved right after it, and duplicate artwork
+ * is skipped while fresh covers are still available.
+ */
+function blendSongPools(
+  primary: RankedCandidate[],
+  secondary: RankedCandidate[],
+): RankedCandidate[] {
+  const usedCovers = new Set<string>();
+  const out: RankedCandidate[] = [];
+  const push = (e: RankedCandidate | undefined) => {
+    if (!e) return;
+    if (e.c.cover) usedCovers.add(e.c.cover);
+    out.push(e);
+  };
+
+  let si = 0;
+  for (const p of primary) {
+    push(p);
+    while (si < secondary.length && secondary[si].score < p.score - 15) si += 1;
+    if (si >= secondary.length) continue;
+    let picked = si;
+    let lookahead = Math.min(3, secondary.length - si);
+    const coverIsUsed = (candidate: RankedCandidate) =>
+      !!candidate.c.cover && usedCovers.has(candidate.c.cover);
+    while (lookahead > 0 && coverIsUsed(secondary[picked])) {
+      picked += 1;
+      lookahead -= 1;
+    }
+    const cand = secondary[picked];
+    if (!cand.c.cover || !usedCovers.has(cand.c.cover)) {
+      push(cand);
+      si = picked + 1;
+    }
+  }
+  while (si < secondary.length) push(secondary[si++]);
+  return out;
+}
+
+/** Fetch, rank, and blend the full suggestion pool for a query. */
+async function fetchSuggestionPool(q: string): Promise<SearchSuggestion[]> {
+  const [inSongsRes, enSongsRes, artistsRes, albumsRes] = await Promise.allSettled([
+    searchSongs(q, 25, ["IN"]),
+    searchSongs(q, 20, ["US", "GB"]),
+    searchArtists(q, 6),
+    searchAlbums(q, 6),
   ]);
 
-  const songs = songsRes.status === "fulfilled" ? songsRes.value : [];
+  const inSongs = inSongsRes.status === "fulfilled" ? inSongsRes.value : [];
+  const enSongs = enSongsRes.status === "fulfilled" ? enSongsRes.value : [];
   const artists = artistsRes.status === "fulfilled" ? artistsRes.value : [];
   const albums = albumsRes.status === "fulfilled" ? albumsRes.value : [];
 
-  const candidates: SearchSuggestion[] = [
-    ...songs.map((song) => ({
-      id: song.id,
-      kind: "song" as const,
-      title: song.title,
-      subtitle: `${song.artist}${song.album ? ` · ${song.album}` : ""}`,
-      cover: song.coverSmall || song.coverMedium || song.cover,
-      song,
-    })),
-    ...artists.map((artist) => ({
-      id: artist.id,
-      kind: "artist" as const,
-      title: artist.name,
-      subtitle: "Artist",
-      cover: artist.imageSmall || artist.imageMedium || artist.image,
-      artist,
-    })),
-    ...albums.map((album) => ({
-      id: album.id,
-      kind: "album" as const,
-      title: album.title,
-      subtitle: `${album.artist} · Album`,
-      cover: album.coverSmall || album.coverMedium || album.cover,
-      album,
-    })),
-  ];
+  const inRanked = rankList(q, dedupeSuggestions(inSongs.map(toSongSuggestion)));
+  const enRanked = rankList(q, dedupeSuggestions(enSongs.map(toSongSuggestion)));
+  const otherRanked = rankList(
+    q,
+    dedupeSuggestions([...artists.map(toArtistSuggestion), ...albums.map(toAlbumSuggestion)]),
+  );
 
-  const ranked = candidates
-    .map((c) => {
-      const artist =
-        c.kind === "song" ? c.song?.artist || "" :
-        c.kind === "artist" ? c.artist?.name || "" :
-        c.album?.artist || "";
-      const score = rankCandidate(q, c.title, artist);
-      return { c, score };
-    })
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_SUGGESTIONS)
-    .map((entry) => entry.c);
+  const mixed = blendSongPools(inRanked, enRanked);
 
-  suggestionCache.set(q, { items: ranked, fetchedAt: Date.now() });
-  return ranked;
+  // Interleave artists/albums into the song list when their scores are close,
+  // so a strong artist match (e.g. "drake") surfaces early.
+  const merged: SearchSuggestion[] = [];
+  const seen = new Set<string>();
+  const pushMerged = (entry: RankedCandidate | undefined) => {
+    if (!entry) return;
+    const key = `${entry.c.kind}:${entry.c.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(entry.c);
+  };
+
+  let oi = 0;
+  for (const songEntry of mixed) {
+    pushMerged(songEntry);
+    while (oi < otherRanked.length && otherRanked[oi].score < songEntry.score - 5) oi += 1;
+    if (oi < otherRanked.length && otherRanked[oi].score >= songEntry.score - 5) {
+      pushMerged(otherRanked[oi]);
+      oi += 1;
+    }
+  }
+  while (oi < otherRanked.length) pushMerged(otherRanked[oi++]);
+
+  return merged;
+}
+
+/**
+ * Autocomplete suggestions for the search dropdown.
+ * Queries shorter than 2 characters return nothing; repeated queries are
+ * served from an in-memory cache (5 minutes). Pass `offset`/`limit` to page
+ * through the pool — pages never overlap, so no song can appear twice.
+ */
+export async function searchSuggestions(
+  query: string,
+  offset = 0,
+  limit = SUGGESTION_PAGE_SIZE,
+): Promise<{ items: SearchSuggestion[]; total: number }> {
+  const q = normalize(query);
+  if (q.length < 2) return { items: [], total: 0 };
+
+  let pool: SearchSuggestion[];
+  const cached = suggestionCache.get(q);
+  if (cached && Date.now() - cached.fetchedAt < SUGGESTION_CACHE_TTL_MS) {
+    pool = cached.pool;
+  } else {
+    pool = await fetchSuggestionPool(q);
+    suggestionCache.set(q, { pool, fetchedAt: Date.now() });
+  }
+
+  return {
+    items: pool.slice(offset, offset + limit),
+    total: pool.length,
+  };
 }

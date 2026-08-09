@@ -1,26 +1,130 @@
 @import "tailwindcss";
 
+/*
+  FOREST GREEN + WARM CREAM + PEACH + RICH BROWN
+  -----------------------------------------------------------
+  #1D4533  Forest green
+  #F7EAE0  Warm cream
+  #F9D2BA  Peach
+  #5E3122  Rich brown
+
+  DARK  (default): forest-green background, brown surfaces, peach accents, cream text.
+  LIGHT            : cream background, peach surfaces, forest-green text and accents.
+*/
+
+:root {
+  color-scheme: dark;
+
+  /* Base surfaces */
+  --t-background: #1d4533;
+  --t-secondary: #5e3122;
+  --t-card: #5e3122;
+
+  /* Borders */
+  --t-border: rgba(247, 234, 224, 0.18);
+
+  /* Text */
+  --t-foreground: #f7eae0;
+  --t-secondary-text: rgba(247, 234, 224, 0.72);
+  --t-muted: rgba(247, 234, 224, 0.52);
+  --t-primary-foreground: #1d4533;
+
+  /* Accent (peach and rich brown) */
+  --t-primary: #f9d2ba;
+  --t-primary-hover: #f7eae0;
+  --t-accent: #5e3122;
+  --t-accent-foreground: #f7eae0;
+
+  /* Semantic */
+  --t-error: #f9d2ba;
+  --t-warning: #f9d2ba;
+  --t-success: #f7eae0;
+
+  /* Shadow */
+  --t-shadow-primary: rgba(249, 210, 186, 0.18);
+  --t-shadow-accent: rgba(94, 49, 34, 0.5);
+  --t-shadow-deep: rgba(29, 69, 51, 0.55);
+  --t-accent-glow: rgba(249, 210, 186, 0.38);
+  --t-glass: rgba(94, 49, 34, 0.68);
+
+  /* Search suggestion surface */
+  --t-search-surface: #1f150c;
+  --t-search-border: rgba(247, 234, 224, 0.14);
+  --t-search-shadow: rgba(0, 0, 0, 0.4);
+
+  /* Gradient */
+  --t-gradient-a: #f7eae0;
+  --t-gradient-b: #f9d2ba;
+  --t-gradient-c: #5e3122;
+}
+
+.light {
+  color-scheme: light;
+
+  --t-background: #f7eae0;
+  --t-secondary: #f9d2ba;
+  --t-card: #f7eae0;
+
+  --t-border: rgba(29, 69, 51, 0.18);
+
+  --t-foreground: #1d4533;
+  --t-secondary-text: #5e3122;
+  --t-muted: rgba(29, 69, 51, 0.65);
+  --t-primary-foreground: #f7eae0;
+
+  --t-primary: #1d4533;
+  --t-primary-hover: #5e3122;
+  --t-accent: #5e3122;
+  --t-accent-foreground: #f7eae0;
+
+  --t-error: #5e3122;
+  --t-warning: #5e3122;
+  --t-success: #1d4533;
+
+  --t-shadow-primary: rgba(29, 69, 51, 0.2);
+  --t-shadow-accent: rgba(94, 49, 34, 0.24);
+  --t-shadow-deep: rgba(29, 69, 51, 0.24);
+  --t-accent-glow: rgba(249, 210, 186, 0.45);
+  --t-glass: rgba(247, 234, 224, 0.76);
+
+  --t-search-surface: #e1dcc9;
+  --t-search-border: rgba(29, 69, 51, 0.2);
+  --t-search-shadow: rgba(94, 49, 34, 0.2);
+
+  --t-gradient-a: #1d4533;
+  --t-gradient-b: #5e3122;
+  --t-gradient-c: #f9d2ba;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* Brand colors */
-  --color-primary: #1d4533;
-  --color-primary-hover: #2a5c45;
-  --color-accent: #f9d2ba;
-  --color-surface: #f7eae0;
-  --color-background: #f7eae0;
-  --color-card: #ffffff;
-  --color-border: #e8d8c7;
-  --color-foreground: #1d4533;
-  --color-secondary-text: #5e3122;
-  --color-muted: #8a6b57;
-  --color-error: #c0452c;
-  --color-warning: #c9892a;
-  --color-success: #1d4533;
-  --color-accent-glow: rgba(29, 69, 51, 0.35);
+  /* Brand colors (theme-aware) */
+  --color-primary: var(--t-primary);
+  --color-primary-hover: var(--t-primary-hover);
+  --color-primary-foreground: var(--t-primary-foreground);
+  --color-accent: var(--t-accent);
+  --color-accent-foreground: var(--t-accent-foreground);
+  --color-surface: var(--t-background);
+  --color-background: var(--t-background);
+  --color-secondary: var(--t-secondary);
+  --color-card: var(--t-card);
+  --color-border: var(--t-border);
+  --color-foreground: var(--t-foreground);
+  --color-secondary-text: var(--t-secondary-text);
+  --color-muted: var(--t-muted);
+  --color-error: var(--t-error);
+  --color-warning: var(--t-warning);
+  --color-success: var(--t-success);
+  --color-accent-glow: var(--t-shadow-accent);
+  --color-search-surface: var(--t-search-surface);
+  --color-search-border: var(--t-search-border);
 
   --radius-card: 1.25rem;
   --radius-xl-card: 1.5rem;
+
+  --shadow-card: 0 10px 40px var(--t-shadow-accent);
+  --shadow-card-hover: 0 18px 50px var(--t-shadow-accent);
 
   --animate-fade-in: fade-in 0.5s ease-in-out;
   --animate-slide-up: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -79,17 +183,20 @@
   }
 
   body {
-    background-color: var(--color-surface);
+    background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    transition:
+      background-color 0.28s ease,
+      color 0.28s ease;
   }
 
   ::selection {
-    background-color: var(--color-primary);
-    color: #f7eae0;
+    background-color: var(--t-accent);
+    color: var(--t-accent-foreground);
   }
 
   /* Custom scrollbar */
@@ -98,27 +205,32 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--color-surface);
+    background: var(--t-background);
   }
   ::-webkit-scrollbar-thumb {
-    background: #5e3122;
+    background: var(--t-accent);
     border-radius: 9999px;
-    border: 2px solid var(--color-surface);
+    border: 2px solid var(--t-background);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary);
+    background: var(--t-primary);
   }
 }
 
 @layer utilities {
   .glass {
-    background: rgba(247, 234, 224, 0.65);
+    background: var(--t-glass);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
 
   .text-gradient-green {
-    background: linear-gradient(135deg, #1d4533 0%, #2a5c45 50%, #f9d2ba 100%);
+    background: linear-gradient(
+      135deg,
+      var(--t-gradient-a) 0%,
+      var(--t-gradient-b) 50%,
+      var(--t-gradient-c) 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -127,7 +239,7 @@
   .bg-grid {
     background-image: radial-gradient(
       circle at 1px 1px,
-      rgba(94, 49, 34, 0.06) 1px,
+      var(--t-border) 1px,
       transparent 0
     );
     background-size: 40px 40px;
@@ -139,5 +251,34 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Subtle scrollbar for the suggestion dropdown */
+  .search-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--t-border) transparent;
+  }
+  .search-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .search-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .search-scroll::-webkit-scrollbar-thumb {
+    background: var(--t-border);
+    border-radius: 9999px;
+    border: none;
+  }
+  .search-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--t-primary);
+  }
+
+  /* Smooth theme transition for surfaces */
+  .theme-transition {
+    transition:
+      background-color 0.28s ease,
+      border-color 0.28s ease,
+      color 0.28s ease,
+      box-shadow 0.28s ease;
   }
 }

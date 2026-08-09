@@ -16,7 +16,7 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { suggestions, isLoading, clearSuggestions } =
+  const { suggestions, hasMore, isLoading, isLoadingMore, loadMore, clearSuggestions } =
     useSearchSuggestions(searchQuery);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -88,7 +88,7 @@ export function Home() {
                 }}
                 onKeyDown={handleKeyDown}
 placeholder="Search songs or artists…"
-                className="h-14 w-full rounded-2xl border border-border bg-white/70 pl-12 pr-5 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md transition-all placeholder:text-muted hover:border-border focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(29,69,51,0.12),inset_0_1px_0_rgba(255,255,255,0.7)] focus:outline-none focus:placeholder:text-foreground/60"
+className="h-14 w-full rounded-2xl border border-border bg-card/70 pl-12 pr-5 text-sm text-foreground backdrop-blur-md transition-all placeholder:text-muted hover:border-border focus:border-primary/50 focus:shadow-[0_0_0_4px_var(--t-accent-glow)] focus:outline-none focus:placeholder:text-foreground/60"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -96,15 +96,18 @@ placeholder="Search songs or artists…"
                 open={dropdownOpen}
                 suggestions={suggestions}
                 isLoading={isLoading}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
                 activeIndex={activeIndex}
                 onSelect={selectSuggestion}
                 onActiveIndexChange={setActiveIndex}
+                onLoadMore={loadMore}
                 onClose={closeDropdown}
               />
             </div>
             <button
               type="submit"
-              className="inline-flex h-14 shrink-0 items-center rounded-2xl bg-primary px-8 font-semibold text-[#F7EAE0] shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-95"
+className="inline-flex h-14 shrink-0 items-center rounded-2xl bg-primary px-8 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-95"
             >
               Search
             </button>

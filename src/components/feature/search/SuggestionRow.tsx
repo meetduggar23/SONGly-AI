@@ -76,7 +76,7 @@ export function SuggestionRow({
         onSelect();
       }}
       className={cn(
-        "group relative flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-2.5 text-left transition-colors",
+        "group relative flex w-full min-w-0 max-w-full items-center gap-3 overflow-hidden border-l-2 border-transparent px-3 py-2.5 text-left transition-colors",
         active ? "border-primary bg-primary/[0.07]" : "hover:bg-primary/[0.04]",
       )}
     >
@@ -101,7 +101,7 @@ export function SuggestionRow({
         <span className="flex min-w-0 items-center gap-1.5">
           <span
             className={cn(
-              "truncate text-sm font-semibold text-foreground",
+              "min-w-0 break-words text-sm font-semibold text-foreground",
               isPlaying && "text-primary",
             )}
           >
@@ -109,7 +109,7 @@ export function SuggestionRow({
           </span>
           {isPlaying && <MiniEqualizer />}
         </span>
-        <span className="truncate text-xs text-secondary-text">
+        <span className="min-w-0 break-words text-xs text-secondary-text">
           {suggestion.subtitle}
         </span>
       </span>
@@ -125,7 +125,7 @@ export function SuggestionRow({
           }}
           onClick={handlePlay}
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[#F7EAE0] shadow-lg shadow-primary/25 transition-all duration-200",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200",
             "hover:bg-primary-hover hover:shadow-primary/40",
             isPlaying || alwaysShowPlay
               ? "opacity-100"

@@ -8,13 +8,14 @@ import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import { stopPreview, playPreview } from "@/utils/audio";
 import { navigateToSuggestion } from "@/utils/suggestionNavigation";
 import { SuggestionRow } from "@/components/feature/search/SuggestionRow";
+import { DiscoverMoreFooter } from "@/components/feature/search/DiscoverMoreFooter";
 import type { SearchSuggestion } from "@/types";
 
 export function SearchBar() {
   const { searchOpen, closeSearch } = useUI();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const { suggestions, isLoading, clearSuggestions } =
+  const { suggestions, hasMore, isLoading, isLoadingMore, loadMore, clearSuggestions } =
     useSearchSuggestions(query);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,7 +124,7 @@ placeholder="Search songs or artists…"
           </button>
         </form>
 
-        <div className="max-h-[60vh] overflow-y-auto p-2">
+        <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden p-2">
           {!query && (
             <div className="flex items-center gap-3 p-4 text-sm text-secondary-text">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -147,6 +148,15 @@ placeholder="Search songs or artists…"
               onTogglePlay={handleTogglePlay}
             />
           ))}
+
+          {!isLoading && suggestions.length > 0 && (
+            <DiscoverMoreFooter
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore}
+              className="mt-1"
+            />
+          )}
         </div>
       </motion.div>
     </motion.div>
