@@ -84,12 +84,42 @@ function devApiProxy(): Plugin {
  *
  * The browser posts the raw audio to `/api/audd?return=apple_music&market=IN`
  * and the API token is appended HERE, on the server — it never ships in the
- * frontend bundle. The multipart body is forwarded verbatim.
+ * frontend bundle. The multipart body is forwarded verbatim. If the primary
+ * token is rejected by AudD (invalid/inactive), an optional fallback token is
+ * tried automatically so detection keeps working.
  */
-function auddProxy(auddApiToken: string): Plugin {
+function auddProxy(auddApiToken: string, auddFallbackToken: string): Plugin {
+  const callAudD = async (
+    body: Buffer,
+    url: URL,
+    apiToken: string,
+    contentType: string | undefined,
+  ): Promise<{ status: number; data: Buffer }> => {
+    const target = new URL("https://api.audd.io/");
+    target.searchParams.set("api_token", apiToken);
+    for (const [key, value] of url.searchParams) {
+      if (key !== "api_token" && value) target.searchParams.set(key, value);
+    }
+
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (contentType) {
+      headers["Content-Type"] = Array.isArray(contentType)
+        ? contentType.join(", ")
+        : String(contentType);
+    }
+
+    const upstream = await fetch(target.toString(), {
+      method: "POST",
+      headers,
+      body: body.length > 0 ? body : undefined,
+    });
+
+    return { status: upstream.status, data: Buffer.from(await upstream.arrayBuffer()) };
+  };
+
   const handler = async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      if (!auddApiToken) {
+      if (!auddApiToken && !auddFallbackToken) {
         res.statusCode = 503;
         res.setHeader("Content-Type", "application/json");
         res.end(
@@ -106,35 +136,23 @@ function auddProxy(auddApiToken: string): Plugin {
 
       const body = await readBody(req);
       const url = new URL(req.url || "", "http://localhost");
-
-      const target = new URL("https://api.audd.io/");
-      target.searchParams.set("api_token", auddApiToken);
-      for (const [key, value] of url.searchParams) {
-        if (key !== "api_token" && value) target.searchParams.set(key, value);
-      }
-
-      const headers: Record<string, string> = { Accept: "application/json" };
       const contentType = req.headers["content-type"];
-      if (contentType) {
-        headers["Content-Type"] = Array.isArray(contentType)
-          ? contentType.join(", ")
-          : String(contentType);
+
+      let result = await callAudD(body, url, auddApiToken, contentType);
+
+      // AudD rejects the primary token (invalid/inactive) — try the fallback.
+      if (
+        result.status === 200 &&
+        auddFallbackToken &&
+        result.data.toString().includes('"error_code":900')
+      ) {
+        result = await callAudD(body, url, auddFallbackToken, contentType);
       }
 
-      const upstream = await fetch(target.toString(), {
-        method: "POST",
-        headers,
-        body: body.length > 0 ? body : undefined,
-      });
-
-      const data = Buffer.from(await upstream.arrayBuffer());
-      res.statusCode = upstream.status;
+      res.statusCode = result.status;
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader(
-        "Content-Type",
-        upstream.headers.get("content-type") || "application/json",
-      );
-      res.end(data);
+      res.setHeader("Content-Type", "application/json");
+      res.end(result.data);
     } catch (error) {
       res.statusCode = 502;
       res.setHeader("Content-Type", "application/json");
@@ -163,9 +181,10 @@ export default defineConfig(({ mode }) => {
   // Server-side env (not exposed to the browser): .env / .env.local etc.
   const env = loadEnv(mode, process.cwd(), "");
   const auddApiToken = env.AUDD_API_KEY || "";
+  const auddFallbackToken = env.AUDD_API_KEY_FALLBACK || "";
 
   return {
-    plugins: [react(), devApiProxy(), auddProxy(auddApiToken)],
+    plugins: [react(), devApiProxy(), auddProxy(auddApiToken, auddFallbackToken)],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
