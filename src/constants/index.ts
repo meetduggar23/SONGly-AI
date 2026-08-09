@@ -11,11 +11,7 @@ export const API = {
   lrcLib: "https://lrclib.net/api",
   itunes: "https://itunes.apple.com",
   lastfm: "https://ws.audioscrobbler.com/2.0",
-  audd: "https://api.audd.io",
 };
-
-// AudD recognition token (optional — set VITE_AUDD_API_KEY in .env)
-export const AUDD_API_TOKEN = import.meta.env.VITE_AUDD_API_KEY || "";
 
 // Local storage keys
 export const STORAGE_KEYS = {

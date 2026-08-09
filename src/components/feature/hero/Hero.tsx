@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Mic, TriangleAlert } from "lucide-react";
-import { hasAuddKey } from "@/services/audd";
 import { useSongRecognition } from "@/hooks/useSongRecognition";
 import { useFavoritesStore } from "@/store/favorites";
 import {
@@ -99,17 +98,21 @@ const handleStartListening = () => {
   };
 
   const handleLyrics = () => {
-    if (detectedTrack) {
+    if (detectedTrack && /^(\d+|it-\d+)$/.test(detectedTrack.id)) {
       navigate(`/song/${detectedTrack.id}`);
-    } else if (detectedSong) {
+    } else {
       navigate(
-        `/search?q=${encodeURIComponent(`${detectedSong.title} ${detectedSong.artist}`)}`,
+        `/search?q=${encodeURIComponent(
+          `${detectedSong?.title ?? detectedTrack?.title ?? ""} ${
+            detectedSong?.artist ?? detectedTrack?.artist ?? ""
+          }`,
+        )}`,
       );
     }
   };
 
   const listening = phase === "listening";
-  const analyzing = phase === "analyzing";
+  const analyzing = phase === "analyzing" || phase === "success";
 
   return (
     <section className="relative overflow-hidden">
@@ -175,21 +178,6 @@ className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Demo mode note */}
-            {!hasAuddKey && phase !== "analyzing" && phase !== "listening" && (
-              <p className="mt-6 max-w-md text-xs text-muted lg:text-left">
-                Demo mode: add your free{" "}
-                <code className="rounded bg-border/40 px-1.5 py-0.5 text-primary">
-                  VITE_AUDD_API_KEY
-                </code>{" "}
-                (audd.io) to the{" "}
-                <code className="rounded bg-border/40 px-1.5 py-0.5 text-primary">
-                  .env
-                </code>{" "}
-                file to identify real songs.
-              </p>
-            )}
           </div>
 
           {/* RIGHT — immersive music showcase */}

@@ -800,12 +800,7 @@ export function MusicShowcase({
     }
   };
 
-  const detectionPhase =
-    activeDetection?.fromDemo
-      ? "Demo result"
-      : phase && phase !== "Ready"
-        ? phase
-        : "Identified";
+  const detectionPhase = phase && phase !== "Ready" ? phase : "Identified";
 
   if (loading && pool.length === 0) {
     return (

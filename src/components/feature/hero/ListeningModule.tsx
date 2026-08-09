@@ -118,7 +118,7 @@ export function ListeningModule({
   onFavorite,
 }: ListeningModuleProps) {
   const listening = phase === "listening";
-  const analyzing = phase === "analyzing";
+  const analyzing = phase === "analyzing" || phase === "success";
   const active = listening || analyzing;
 
 return (
@@ -229,6 +229,14 @@ active
                 <span className="text-sm leading-none">✨</span>
                 <span className="text-sm font-medium text-foreground">
                   Analyzing audio…
+                </span>
+              </>
+            )}
+            {phase === "no-match" && (
+              <>
+                <span className="h-2 w-2 rounded-full bg-warning" />
+                <span className="text-sm font-medium text-foreground">
+                  No song found. Try again.
                 </span>
               </>
             )}

@@ -101,6 +101,20 @@ export interface FavoriteItem {
   data?: Song | Artist | Album;
 }
 
+export interface DetectedAppleMusic {
+  name?: string;
+  artistName?: string;
+  albumName?: string;
+  artworkUrl?: string;
+  previewUrl?: string;
+  url?: string;
+  isrc?: string;
+  releaseDate?: string;
+  durationInMillis?: number;
+  /** Apple Music track id (playParams.id). */
+  trackId?: string;
+}
+
 export interface DetectedSong {
   title: string;
   artist: string;
@@ -109,5 +123,8 @@ export interface DetectedSong {
   coverUrl?: string;
   duration?: number;
   songId?: string;
-  fromDemo?: boolean;
+  songLink?: string;
+  isrc?: string;
+  previewUrl?: string;
+  appleMusic?: DetectedAppleMusic;
 }

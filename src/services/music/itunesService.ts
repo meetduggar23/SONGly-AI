@@ -3,6 +3,7 @@ import {
   searchSongs as deezerSearchSongs,
   searchArtists as deezerSearchArtists,
   searchAlbums as deezerSearchAlbums,
+  getChartTracks as deezerChartTracks,
 } from "@/services/deezer";
 import type { Song, Artist, Album, SearchResults, SearchSuggestion } from "@/types";
 
@@ -40,6 +41,7 @@ interface ITunesTrack {
   trackViewUrl?: string;
   artistViewUrl?: string;
   country?: string;
+  isrc?: string;
 }
 
 interface ITunesArtist {
@@ -476,6 +478,263 @@ export async function searchSuggestions(
   } else {
     pool = await fetchSuggestionPool(q);
     suggestionCache.set(q, { pool, fetchedAt: Date.now() });
+  }
+
+  return {
+    items: pool.slice(offset, offset + limit),
+    total: pool.length,
+  };
+}
+
+/**
+ * Exact-track resolution for the detection pipeline.
+ *
+ * `getSongByIsrc` looks a song up directly by its ISRC (the strongest possible
+ * match — used when AudD returns one). `findMatchingTrack` falls back to a
+ * ranked iTunes search using the detected artist + title. Strings are
+ * normalized (lowercase, trimmed, punctuation stripped, apostrophes unified,
+ * Unicode/Hindi letters preserved) before comparison, and remix/live/karaoke
+ * variants are deprioritized so the original song wins.
+ */
+
+/** Look up a song in the iTunes catalog by ISRC. */
+export async function getSongByIsrc(isrc: string): Promise<Song | null> {
+  if (!isrc) return null;
+  for (const country of STOREFRONTS) {
+    try {
+      const { data } = await itunesClient.get("/lookup", {
+        params: { isrc, country, entity: "song" },
+      });
+      const results: ITunesTrack[] = data?.results ?? [];
+      const track = results.find(
+        (r) =>
+          r.wrapperType === "track" &&
+          r.kind === "song" &&
+          (r.isrc ?? "").toUpperCase() === isrc.toUpperCase(),
+      );
+      if (track) return mapSong(track);
+    } catch {
+      // Try the next storefront.
+    }
+  }
+  return null;
+}
+
+/**
+ * Normalize strings for fuzzy matching: lowercase, trim, unify apostrophes,
+ * remove punctuation, collapse whitespace. Unicode letters (e.g. Hindi) are
+ * kept intact.
+ */
+function normalizeTrackString(value: string): string {
+  return value
+    .toLocaleLowerCase("en")
+    .trim()
+    .replace(/[\u2018\u2019\u02b9\u02bc`]/g, "'")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const VARIANT_MARKERS =
+  /\b(remix|rmx|extended mix|dj mix|karaoke|instrumental|acoustic|live|cover|reprise|sped up|slowed|edit|version)\b/g;
+
+/** Score how well a candidate matches the detected title/artist/album. */
+function scoreCandidate(
+  candidate: Song,
+  qTitle: string,
+  qArtist: string,
+  qAlbum?: string,
+): number {
+  const title = normalizeTrackString(candidate.title);
+  const artist = normalizeTrackString(candidate.artist);
+  let score = 0;
+
+  if (title === qTitle && artist === qArtist) score = 100;
+  else if (title === qTitle && artist.includes(qArtist)) score = 96;
+  else if (title === qTitle && qArtist.includes(artist)) score = 93;
+  else if (title.includes(qTitle) && artist === qArtist) score = 88;
+  else if (title === qTitle) score = 80;
+  else if (title.includes(qTitle) && artist.includes(qArtist)) score = 74;
+  else return 0;
+
+  // Remixes / live / karaoke variants are never preferred over the original.
+  if (VARIANT_MARKERS.test(title)) score -= 25;
+
+  if (qAlbum) {
+    const candidateAlbum = normalizeTrackString(candidate.album || "");
+    if (candidateAlbum === qAlbum) score += 8;
+  }
+
+  return score;
+}
+
+/**
+ * Find the best iTunes match for a detected song. Returns null when nothing
+ * scores high enough (callers can then show a "no match" state).
+ */
+export async function findMatchingTrack(
+  title: string,
+  artist: string,
+  album?: string,
+): Promise<Song | null> {
+  const qTitle = normalizeTrackString(title);
+  const qArtist = normalizeTrackString(artist);
+  if (!qTitle) return null;
+
+  const query = `${artist} ${title}`.trim();
+  const candidates = await searchSongs(query, 25, ["IN", "US", "GB"]);
+
+  let best: Song | null = null;
+  let bestScore = 0;
+  for (const candidate of candidates) {
+    const score = scoreCandidate(candidate, qTitle, qArtist, album);
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+
+  return bestScore >= 70 ? best : null;
+}
+
+/**
+ * Live music discovery — no search query required.
+ *
+ * Uses the official iTunes RSS top-songs feeds (India + US/GB) so the section
+ * is always populated with real, currently-trending music. The Indian chart
+ * is the primary pool (Hindi / Bollywood / regional) and international charts
+ * are blended in at a ~2:1 ratio for a natural mixed selection. The Deezer
+ * global chart is used as a fallback provider, and the whole pool is cached
+ * for 10 minutes. Pages are sliced by `offset`/`limit` and never overlap, so
+ * duplicates (trackId-based) cannot appear.
+ */
+
+interface ITunesFeedImage {
+  label: string;
+}
+
+interface ITunesFeedEntry {
+  "im:name"?: { label: string };
+  "im:collection"?: { "im:name"?: { label: string } };
+  "im:artist"?: { label: string };
+  "im:image"?: ITunesFeedImage[];
+  "im:previewUrl"?: { label: string };
+  "im:releaseDate"?: { label: string };
+  id?: { label: string; attributes?: { "im:id"?: string } };
+  link?: Array<{ attributes?: { href?: string; "im:assetType"?: string } }>;
+}
+
+const DISCOVERY_CACHE_TTL_MS = 10 * 60 * 1000;
+const discoveryCache = new Map<string, { pool: Song[]; fetchedAt: number }>();
+
+function resizeArtwork(url: string | undefined, size: number): string | undefined {
+  return url?.replace(/\/(\d+x\d+)(?:bb|cc)?\.jpg$/, `/${size}x${size}bb.jpg`);
+}
+
+function mapFeedEntry(entry: ITunesFeedEntry): Song | null {
+  const trackId = entry.id?.attributes?.["im:id"];
+  const title = entry["im:name"]?.label?.trim();
+  if (!trackId || !title) return null;
+
+  const images = entry["im:image"] ?? [];
+  const cover = images[images.length - 1]?.label;
+  const previewUrl =
+    entry.link?.find((l) => l.attributes?.["im:assetType"] === "preview")
+      ?.attributes?.href || entry["im:previewUrl"]?.label;
+
+  return {
+    id: `it-${trackId}`,
+    title,
+    artist: entry["im:artist"]?.label || "Unknown Artist",
+    album: entry["im:collection"]?.["im:name"]?.label,
+    cover,
+    coverSmall: images[0]?.label,
+    coverMedium: cover,
+    coverLarge: resizeArtwork(cover, 600),
+    previewUrl,
+    link: entry.id?.label,
+    releaseYear: entry["im:releaseDate"]?.label
+      ? new Date(entry["im:releaseDate"].label).getFullYear()
+      : undefined,
+    source: "itunes",
+  };
+}
+
+async function fetchTopFeed(country: string, limit: number): Promise<Song[]> {
+  const { data } = await itunesClient.get(
+    `${country}/rss/topsongs/limit=${limit}/json`,
+  );
+  return ((data?.feed?.entry ?? []) as ITunesFeedEntry[])
+    .map(mapFeedEntry)
+    .filter((s): s is Song => s !== null);
+}
+
+/** Merge the primary (Indian) and secondary (international) pools ~2:1. */
+function blendChartPools(primary: Song[], secondary: Song[]): Song[] {
+  const out: Song[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < primary.length || j < secondary.length) {
+    if (j < secondary.length && (i >= primary.length || out.length % 3 === 2)) {
+      out.push(secondary[j++]);
+    } else if (i < primary.length) {
+      out.push(primary[i++]);
+    } else {
+      break;
+    }
+  }
+  return out;
+}
+
+/** Deduplicate songs by their id (trackId-based for iTunes tracks). */
+function dedupeSongs(list: Song[]): Song[] {
+  const seen = new Set<string>();
+  const out: Song[] = [];
+  for (const song of list) {
+    if (seen.has(song.id)) continue;
+    seen.add(song.id);
+    out.push(song);
+  }
+  return out;
+}
+
+async function fetchDiscoveryPool(): Promise<Song[]> {
+  const [inRes, usRes, gbRes] = await Promise.allSettled([
+    fetchTopFeed("IN", 40),
+    fetchTopFeed("US", 40),
+    fetchTopFeed("GB", 30),
+  ]);
+
+  const inSongs = inRes.status === "fulfilled" ? inRes.value : [];
+  const usSongs = usRes.status === "fulfilled" ? usRes.value : [];
+  const gbSongs = gbRes.status === "fulfilled" ? gbRes.value : [];
+
+  const pool = dedupeSongs(
+    blendChartPools(inSongs, dedupeSongs([...usSongs, ...gbSongs])),
+  );
+  if (pool.length > 0) return pool;
+
+  // Every iTunes feed failed — fall back to the Deezer global chart.
+  return dedupeSongs(await deezerChartTracks(60));
+}
+
+/**
+ * Page through the live discovery pool (top songs across India + US/GB).
+ * No search term is needed; the pool is cached for 10 minutes and pages are
+ * guaranteed non-overlapping by trackId.
+ */
+export async function discoverSongs(
+  offset = 0,
+  limit = 5,
+): Promise<{ items: Song[]; total: number }> {
+  const key = "top";
+  let pool: Song[];
+  const cached = discoveryCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < DISCOVERY_CACHE_TTL_MS) {
+    pool = cached.pool;
+  } else {
+    pool = await fetchDiscoveryPool();
+    discoveryCache.set(key, { pool, fetchedAt: Date.now() });
   }
 
   return {

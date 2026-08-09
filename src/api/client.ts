@@ -87,11 +87,6 @@ export const lastfmClient = createProxiedClient({
   },
 });
 
-export const auddClient = createProxiedClient({
-  baseURL: API.audd,
-  timeout: 30000,
-});
-
 // Global error interceptor
 const errorInterceptor = (error: unknown) => {
   return Promise.reject(error);
@@ -102,4 +97,3 @@ ovhClient.interceptors.response.use((r) => r, errorInterceptor);
 lrcLibClient.interceptors.response.use((r) => r, errorInterceptor);
 itunesClient.interceptors.response.use((r) => r, errorInterceptor);
 lastfmClient.interceptors.response.use((r) => r, errorInterceptor);
-auddClient.interceptors.response.use((r) => r, errorInterceptor);
