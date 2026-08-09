@@ -26,7 +26,7 @@ export function downloadLyrics(
   lyrics: string,
 ): void {
   const header = `${title}\n${artist}\n${"=".repeat(Math.max(title.length, artist.length))}\n\n`;
-  const footer = `\n\n---\nLyrics via Songly`;
+  const footer = `\n\n---\nLyrics via SONGly`;
   const safeTitle = title.replace(/[\\/:*?"<>|]/g, "_");
   downloadTextFile(`${safeTitle} - ${artist}.txt`, header + lyrics + footer);
 }

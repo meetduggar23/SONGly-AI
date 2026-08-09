@@ -1,10 +1,12 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Menu, X, Home, Heart, Info, AudioLines } from "lucide-react";
+import { useEffect } from "react";
+import { Search, Menu, X, Home, Heart, Info, AudioLines, Moon, Sun } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Logo } from "@/components/common/Logo";
 import { useUI } from "@/context/useUI";
-import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useTheme } from "@/context/ThemeContext";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const navItems = [
   { label: "Home", path: "/", icon: Home },
@@ -13,10 +15,42 @@ const navItems = [
   { label: "About", path: "/about", icon: Info },
 ];
 
+/** Compact circular theme toggle — Moon in dark mode, Sun in light mode. */
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-all duration-300 hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+    >
+      <motion.span
+        key={isDark ? "moon" : "sun"}
+        initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
+        animate={{ rotate: 0, opacity: 1, scale: 1 }}
+        exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="flex items-center justify-center"
+      >
+        {isDark ? <Moon className="h-[18px] w-[18px]" /> : <Sun className="h-[18px] w-[18px]" />}
+      </motion.span>
+    </button>
+  );
+}
+
 export function Navbar() {
   const { openSearch, mobileNavOpen, openMobileNav, closeMobileNav } = useUI();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const location = useLocation();
+  const isCompactNavigation = useMediaQuery("(max-width: 1023px)");
+
+  // Close the drawer when its desktop navigation replacement becomes visible.
+  useEffect(() => {
+    if (!isCompactNavigation) closeMobileNav();
+  }, [isCompactNavigation, closeMobileNav]);
 
   const handleNavClick = (path: string) => {
     closeMobileNav();
@@ -40,6 +74,8 @@ export function Navbar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                aria-label={item.label}
+                title={item.label}
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
@@ -48,27 +84,30 @@ export function Navbar() {
                       : "text-secondary-text hover:bg-card hover:text-foreground",
                   )
                 }
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.path !== "/" && item.label}
+                </NavLink>
             ))}
           </nav>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button
               onClick={openSearch}
-              className="flex h-10 items-center gap-2 rounded-full border border-border bg-white/40 px-4 text-sm text-secondary-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-[0_0_18px_rgba(29,69,51,0.12)]"
+              className="flex h-10 items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-sm text-secondary-text transition-all hover:border-primary/40 hover:text-primary"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
               <span className="hidden sm:inline">Search…</span>
             </button>
-            {isMobile && (
+            {isCompactNavigation && (
               <button
                 onClick={openMobileNav}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-secondary-text transition-colors hover:text-primary"
                 aria-label="Open menu"
+                aria-expanded={mobileNavOpen}
+                aria-controls="mobile-navigation"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -106,12 +145,17 @@ export function Navbar() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <nav className="flex flex-col gap-1" aria-label="Mobile">
+              <nav id="mobile-navigation" className="flex flex-col gap-1" aria-label="Mobile">
                 {navItems.map((item) => (
                   <button
                     key={item.path}
                     onClick={() => handleNavClick(item.path)}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-secondary-text transition-colors hover:bg-border/40 hover:text-foreground"
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                      location.pathname === item.path
+                        ? "bg-primary/10 text-primary"
+                        : "text-secondary-text hover:bg-border/40 hover:text-foreground",
+                    )}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}

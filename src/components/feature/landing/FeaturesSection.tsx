@@ -48,7 +48,7 @@ export function FeaturesSection() {
           Features
         </span>
 <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-          Everything you need to <span className="text-gradient-green">find any song</span>
+          Everything you need to <span className="text-gradient-green">find any song. By AI.</span>
         </h2>
       </motion.div>
 

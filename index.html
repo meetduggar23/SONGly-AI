@@ -4,12 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta
+    <meta
       name="description"
-      content="Identify songs, search by artist or title, preview music, and discover new songs with Songly."
+      content="Identify songs, search by artist or title, preview music, and discover new songs with SONGly."
     />
-    <meta name="theme-color" content="#0A0A0A" />
-    <title>Songly — Find Any Song. Instantly.</title>
+    <meta name="theme-color" content="#000000" />
+    <title>SONGly — Find Any Song. Instantly. By AI.</title>
+    <script>
+      // Prevent flash of wrong theme — apply before React renders.
+      (function () {
+        try {
+          var theme = localStorage.getItem("lfai_theme");
+          var root = document.documentElement;
+          if (theme === "light") {
+            root.classList.add("light");
+            root.classList.remove("dark");
+            root.style.colorScheme = "light";
+          } else {
+            root.classList.add("dark");
+            root.classList.remove("light");
+            root.style.colorScheme = "dark";
+          }
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

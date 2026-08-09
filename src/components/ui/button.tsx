@@ -6,17 +6,17 @@ const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
-      variant: {
+variant: {
         default:
-          "bg-primary text-[#F7EAE0] font-semibold hover:bg-primary-hover shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5",
+          "bg-primary text-primary-foreground font-semibold hover:bg-primary-hover hover:text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5",
         secondary:
-          "bg-card text-foreground border border-border hover:bg-border/40 hover:border-primary/40 hover:text-primary",
+          "bg-card text-foreground border border-border hover:bg-border/40 hover:border-accent/40 hover:text-accent",
         outline:
-          "border border-border bg-transparent text-foreground hover:border-primary hover:text-primary",
+          "border border-border bg-transparent text-foreground hover:border-accent hover:text-accent",
         ghost:
           "text-secondary-text hover:text-foreground hover:bg-card",
         destructive:
-          "bg-error text-white hover:bg-error/90 shadow-lg shadow-error/20",
+          "bg-error text-primary-foreground hover:bg-error/90 shadow-lg shadow-error/20",
         link: "text-primary underline-offset-4 hover:underline p-0",
       },
       size: {

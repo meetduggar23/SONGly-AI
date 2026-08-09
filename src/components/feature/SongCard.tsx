@@ -81,7 +81,7 @@ export function SongCard({ song, index = 0 }: SongCardProps) {
             <button
               onClick={handlePlay}
               className={cn(
-                "absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-[#F7EAE0] shadow-xl transition-all duration-300",
+"absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-all duration-300",
                 isPlaying
                   ? "opacity-100 scale-100"
                   : "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0",

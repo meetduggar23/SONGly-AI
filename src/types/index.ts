@@ -1,4 +1,4 @@
-// Core domain types for the Songly application
+// Core domain types for the SONGly application
 
 export interface Song {
   id: string;

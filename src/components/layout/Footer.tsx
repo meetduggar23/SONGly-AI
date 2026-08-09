@@ -17,7 +17,7 @@ export function Footer() {
             <Logo showText={false} />
             <p className="max-w-xs text-center text-sm text-secondary-text md:text-left">
               Find any song. Instantly. Identify, search, and preview music —
-              all in one place.
+              all in one place. By AI.
             </p>
           </div>
 

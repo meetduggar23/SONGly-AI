@@ -77,13 +77,13 @@ export function Favorites() {
             className={cn(
               "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
               filter === f.id
-                ? "bg-primary text-[#F7EAE0]"
+? "bg-primary text-primary-foreground"
                 : "border border-border bg-card text-secondary-text hover:text-foreground",
             )}
           >
             <f.icon className="h-4 w-4" />
             {f.label}
-            <span className={cn("text-xs", filter === f.id ? "text-[#F7EAE0]/70" : "text-muted")}>
+<span className={cn("text-xs", filter === f.id ? "text-primary-foreground/70" : "text-muted")}>
               {f.count}
             </span>
           </button>

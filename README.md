@@ -3,15 +3,15 @@
 <a href="https://github.com/meetduggar23/Lyrics-Finder">
   <img
     src="https://raw.githubusercontent.com/meetduggar23/Lyrics-Finder/main/public/favicon.svg"
-    alt="Songly Logo"
+    alt="SONGly Logo"
     width="72"
     height="72"
   />
 </a>
 
-# Songly <span style="color:#1D4533">AI</span>
+# SONGly <span style="color:#1D4533">AI</span>
 
-**Find any song. Instantly.**
+**Find any song. Instantly. By AI.**
 
 A modern, feature-rich song discovery and identification application built with **React 19**, **Vite**, and **TypeScript**. Identify songs playing around you, search by title or artist, preview music, and view lyrics — all in a beautiful, responsive interface.
 
@@ -39,16 +39,16 @@ A modern, feature-rich song discovery and identification application built with 
 
 ## Tech Stack
 
-| Layer       | Technology                                                              |
-| ----------- | ----------------------------------------------------------------------- |
-| Framework   | React 19 + TypeScript                                                    |
-| Build Tool  | Vite 6                                                                   |
-| Styling     | Tailwind CSS v4 + shadcn-style UI primitives                             |
-| Data Fetch  | Axios + TanStack React Query                                             |
-| State       | Zustand (favorites, history, player, settings)                           |
-| Routing     | React Router v7                                                          |
-| Animation   | Framer Motion                                                            |
-| Forms       | React Hook Form + Zod                                                    |
+| Layer      | Technology                                     |
+| ---------- | ---------------------------------------------- |
+| Framework  | React 19 + TypeScript                          |
+| Build Tool | Vite 6                                         |
+| Styling    | Tailwind CSS v4 + shadcn-style UI primitives   |
+| Data Fetch | Axios + TanStack React Query                   |
+| State      | Zustand (favorites, history, player, settings) |
+| Routing    | React Router v7                                |
+| Animation  | Framer Motion                                  |
+| Forms      | React Hook Form + Zod                          |
 
 ## Getting Started
 
@@ -78,13 +78,13 @@ The app will open automatically at `http://localhost:5173`.
 
 ### Available Scripts
 
-| Script            | Description                               |
-| ----------------- | ----------------------------------------- |
-| `npm run dev`     | Start the development server              |
-| `npm run build`   | Type-check and build for production       |
-| `npm run preview` | Preview the production build locally      |
-| `npm run lint`    | Run ESLint                                |
-| `npm run format`  | Format code with Prettier                 |
+| Script            | Description                          |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start the development server         |
+| `npm run build`   | Type-check and build for production  |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint`    | Run ESLint                           |
+| `npm run format`  | Format code with Prettier            |
 
 ## Environment Variables
 
@@ -94,6 +94,7 @@ Create a `.env` file in the root directory (optional — the app works out of th
 # Last.fm API key (optional, a public demo key is used by default)
 VITE_LASTFM_API_KEY=your_lastfm_api_key
 ```
+
 ## Deployment
 
 Build the project for production:

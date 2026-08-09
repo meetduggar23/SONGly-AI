@@ -40,7 +40,7 @@ export function Avatar({ src, alt = "User", size = "md", className }: AvatarProp
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-hover font-bold text-[#F7EAE0]",
+"flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-hover font-bold text-primary-foreground",
         sizeClasses[size],
         className,
       )}

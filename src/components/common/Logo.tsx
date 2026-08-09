@@ -26,14 +26,14 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
         whileHover={{ scale: 1.05, rotate: -3 }}
         whileTap={{ scale: 0.95 }}
         className={cn(
-          "flex items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30 transition-shadow group-hover:shadow-primary/50",
+          "flex items-center justify-center rounded-xl bg-[#1D4533] shadow-lg shadow-[#1D4533]/30 transition-shadow group-hover:shadow-[#1D4533]/50",
           sizeClasses[size],
         )}
       >
         <svg
           viewBox="0 0 24 24"
           fill="none"
-          className="h-[60%] w-[60%] text-[#F7EAE0]"
+className="h-[60%] w-[60%] text-[#F7EAE0]"
           aria-hidden="true"
         >
           <path
@@ -50,7 +50,7 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
       {showText && (
         <div className="flex flex-col leading-none">
           <span className="text-lg font-extrabold tracking-tight text-foreground">
-            Songly
+            SONGly
           </span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
             AI

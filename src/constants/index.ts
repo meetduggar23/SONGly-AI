@@ -1,7 +1,7 @@
 // Application-wide constants and configuration
 
-export const APP_NAME = "Songly";
-export const APP_TAGLINE = "Find any song. Instantly.";
+export const APP_NAME = "SONGly";
+export const APP_TAGLINE = "Find any song. Instantly. By AI.";
 export const APP_VERSION = "1.0.0";
 
 // API endpoints (raw upstream bases — proxying is handled in @/api/client)
@@ -20,6 +20,7 @@ export const AUDD_API_TOKEN = import.meta.env.VITE_AUDD_API_KEY || "";
 // Local storage keys
 export const STORAGE_KEYS = {
   favorites: "lfai_favorites",
+  theme: "lfai_theme",
 };
 
 // Placeholder images

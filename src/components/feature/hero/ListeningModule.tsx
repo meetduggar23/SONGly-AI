@@ -23,7 +23,7 @@ interface ListeningModuleProps {
 }
 
 const WAVE_BARS = 34;
-const BAR_GREEN = "#7FD9A6";
+const BAR_ACCENT = "#F9D2BA";
 
 interface WaveBar {
   base: number;
@@ -63,9 +63,9 @@ function LiveWaveform({ slow = false }: { slow?: boolean }) {
         <motion.span
           key={i}
           className="w-[2px] rounded-full"
-          style={{
-            backgroundColor: BAR_GREEN,
-            boxShadow: `0 0 6px ${BAR_GREEN}66`,
+style={{
+            backgroundColor: BAR_ACCENT,
+            boxShadow: `0 0 6px ${BAR_ACCENT}66`,
           }}
           animate={{ height: [b.base, b.base + b.amp, b.base] }}
           transition={{
@@ -81,13 +81,13 @@ function LiveWaveform({ slow = false }: { slow?: boolean }) {
   );
 }
 
-/** Songly note mark, reused as the idle state of the detection control. */
+/** SONGly note mark, reused as the idle state of the detection control. */
 function NoteMark() {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className="h-11 w-11 text-[#F7EAE0] sm:h-12 sm:w-12"
+className="h-11 w-11 text-primary-foreground sm:h-12 sm:w-12"
       aria-hidden="true"
     >
       <path
@@ -166,9 +166,9 @@ return (
           whileTap={{ scale: 0.94 }}
           className={cn(
             "relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full transition-colors duration-300 sm:h-36 sm:w-36",
-            active
-              ? "bg-[#142F24] shadow-[0_0_45px_rgba(29,69,51,0.45)]"
-              : "bg-primary shadow-[0_0_35px_rgba(29,69,51,0.3)] hover:shadow-[0_0_55px_rgba(29,69,51,0.45)]",
+active
+              ? "bg-accent shadow-[0_0_45px_var(--t-accent-glow)]"
+              : "bg-primary shadow-[0_0_35px_var(--t-shadow-accent)] hover:shadow-[0_0_55px_var(--t-shadow-accent)]",
             analyzing && "cursor-wait opacity-95",
           )}
         >
@@ -260,7 +260,7 @@ return (
               {previewUrl && (
                 <button
                   onClick={onPreview}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-bold text-[#F7EAE0] transition-colors hover:bg-primary-hover"
+className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
                   aria-label={isPreviewPlaying ? "Pause preview" : "Play preview"}
                 >
                   {isPreviewPlaying ? (
@@ -277,7 +277,7 @@ return (
                   "flex h-9 w-9 items-center justify-center rounded-full border transition-colors",
                   isFavorite
                     ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border text-[#F7EAE0] hover:border-primary/40 hover:text-primary",
+: "border-border text-foreground hover:border-accent/40 hover:text-accent",
                 )}
                 aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
               >

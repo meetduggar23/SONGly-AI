@@ -124,7 +124,8 @@ const handleStartListening = () => {
               <h1 className="text-4xl font-black leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                 Find Any Song.
                 <br />
-                <span className="text-gradient-green">Instantly.</span>
+                <span className="text-gradient-green">Instantly.</span>{" "}
+                <span className="text-primary">By AI.</span>
               </h1>
               <p className="mx-auto mt-4 max-w-md text-base text-secondary-text sm:text-lg lg:mx-0">
                 Identify songs playing around you or search for any song by
@@ -165,7 +166,7 @@ const handleStartListening = () => {
 <div className="mt-4 flex justify-center gap-3 lg:justify-start">
                     <button
                       onClick={handleStartListening}
-                      className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-[#F7EAE0] hover:bg-primary-hover"
+className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                     >
                       <Mic className="h-4 w-4" />
                       Try Again
@@ -225,14 +226,14 @@ const handleStartListening = () => {
                 Songs
               </p>
             </div>
-            <span className="h-9 w-px bg-[#5E3122]/15" />
+<span className="h-9 w-px bg-accent/30" />
             <div className="text-center">
               <p className="text-xl font-extrabold text-foreground">120+</p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-muted">
                 Countries
               </p>
             </div>
-            <span className="h-9 w-px bg-[#5E3122]/15" />
+<span className="h-9 w-px bg-accent/30" />
 <div className="text-center">
               <p className="text-xl font-extrabold text-foreground">Millions</p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-muted">

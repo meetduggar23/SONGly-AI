@@ -55,13 +55,13 @@ export function SongPage() {
       setLoading(false);
 
       setLyricsLoading(true);
-      const songLyrics = await getLyrics({
+      const SONGlyrics = await getLyrics({
         title: data.title,
         artist: data.artist,
         duration: data.duration,
       });
       if (!cancelled) {
-        setLyrics(songLyrics);
+        setLyrics(SONGlyrics);
         setLyricsLoading(false);
       }
     };

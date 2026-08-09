@@ -77,14 +77,14 @@ export function SearchResults() {
             className={cn(
               "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
               tab === t.id
-                ? "bg-primary text-[#F7EAE0]"
+? "bg-primary text-primary-foreground"
                 : "border border-border bg-card text-secondary-text hover:text-foreground",
             )}
           >
             <t.icon className="h-4 w-4" />
             {t.label}
             {typeof t.count === "number" && (
-              <span className={cn("text-xs", tab === t.id ? "text-[#F7EAE0]/70" : "text-muted")}>
+<span className={cn("text-xs", tab === t.id ? "text-primary-foreground/70" : "text-muted")}>
                 {t.count}
               </span>
             )}
