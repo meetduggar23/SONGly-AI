@@ -7,6 +7,7 @@ import { Hero } from "@/components/feature/hero/Hero";
 import { HowItWorks } from "@/components/feature/landing/HowItWorks";
 import { FeaturesSection } from "@/components/feature/landing/FeaturesSection";
 import { SearchSuggestionsDropdown } from "@/components/feature/search/SearchSuggestionsDropdown";
+import { DiscoverMusicSection } from "@/components/feature/discover/DiscoverMusicSection";
 import { navigateToSuggestion } from "@/utils/suggestionNavigation";
 import type { SearchSuggestion } from "@/types";
 
@@ -64,6 +65,8 @@ export function Home() {
   return (
     <div className="pb-10">
       <Hero />
+
+      <DiscoverMusicSection />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Manual search */}

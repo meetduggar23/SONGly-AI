@@ -102,10 +102,14 @@ export function SongCard({ song, index = 0 }: SongCardProps) {
           </p>
           <p className="truncate text-xs text-secondary-text">{song.artist}</p>
           <div className="flex items-center justify-between pt-1">
-            <span className="flex items-center gap-1 text-xs text-muted">
-              <Clock className="h-3 w-3" />
-              {formatDuration(song.duration)}
-            </span>
+            {song.duration ? (
+              <span className="flex items-center gap-1 text-xs text-muted">
+                <Clock className="h-3 w-3" />
+                {formatDuration(song.duration)}
+              </span>
+            ) : (
+              <span />
+            )}
             <button
               onClick={handleFavorite}
               className={cn(
