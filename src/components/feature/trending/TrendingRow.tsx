@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  FileText,
   Heart,
   Minus,
   Pause,
   Play,
-  Search,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -16,6 +16,7 @@ import { useFavoritesStore, songToFavorite } from "@/store/favorites";
 import { usePreviewPlayback } from "@/hooks/usePreviewPlayback";
 import { playPreview, stopPreview } from "@/utils/audio";
 import { toastSuccess } from "@/store/toast";
+import { useUI } from "@/context/useUI";
 
 /**
  * Chart-position movement: ↑ n / ↓ n / —. Only rendered when a previous chart
@@ -69,6 +70,7 @@ export function TrendingRow({ song, index }: TrendingRowProps) {
   const { isPlaying } = usePreviewPlayback(song.previewUrl);
   const isFavorite = useFavoritesStore((s) => s.isFavorite(song.id, "song"));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const { openLyrics } = useUI();
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -90,7 +92,7 @@ export function TrendingRow({ song, index }: TrendingRowProps) {
 
   const handleLyrics = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/song/${song.id}`);
+    openLyrics(song);
   };
 
   return (
@@ -167,9 +169,9 @@ export function TrendingRow({ song, index }: TrendingRowProps) {
           onClick={handleLyrics}
           aria-label="View lyrics"
           title="View lyrics"
-          className="hidden h-9 w-9 items-center justify-center rounded-full text-secondary-text opacity-60 transition-all duration-200 hover:text-foreground hover:opacity-100 group-hover:opacity-100 sm:flex"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-secondary-text opacity-60 transition-all duration-200 hover:text-foreground hover:opacity-100 group-hover:opacity-100"
         >
-          <Search className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
         </button>
         <button
           onClick={handleFavorite}

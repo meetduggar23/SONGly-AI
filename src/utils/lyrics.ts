@@ -70,6 +70,42 @@ export function cleanLyrics(lyrics: string): string {
 }
 
 /**
+ * A single timestamped (LRC) lyric line with its offset in seconds.
+ */
+export interface SyncedLyricLine {
+  time: number;
+  text: string;
+}
+
+/**
+ * Parse LRC-style timestamped lyrics (e.g. `[00:27.93] Swim, swim`) into
+ * ordered lines with their time in seconds. Returns `null` as soon as any
+ * line isn't timestamped, so plain lyrics never get a fabricated sync.
+ */
+export function parseLrcLines(text: string): SyncedLyricLine[] | null {
+  if (!text) return null;
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return null;
+
+  const regex = /^\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]\s*(.*)$/;
+  const entries: SyncedLyricLine[] = [];
+  for (const line of lines) {
+    const match = line.match(regex);
+    if (!match) return null;
+    const textPart = match[4].trim();
+    if (!textPart) return null;
+    const minutes = Number(match[1]);
+    const seconds = Number(match[2]);
+    const fraction = Number(match[3] ?? 0);
+    entries.push({ time: minutes * 60 + seconds + fraction / 1000, text: textPart });
+  }
+  return entries;
+}
+
+/**
  * Extract lines that contain a search term (for finding a lyric snippet).
  */
 export function findLyricLine(lyrics: string, query: string): string | null {

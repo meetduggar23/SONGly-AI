@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { SearchBar } from "@/components/layout/SearchBar";
+import { LyricsPanel } from "@/components/feature/LyricsPanel";
 import { Toaster } from "@/components/ui/toast";
 import { useUI } from "@/context/useUI";
 
@@ -28,6 +29,7 @@ export function Layout() {
       </main>
       <Footer />
       <SearchBar />
+      <LyricsPanel />
       <Toaster />
     </div>
   );

@@ -12,7 +12,7 @@ import { DiscoverMoreFooter } from "@/components/feature/search/DiscoverMoreFoot
 import type { SearchSuggestion } from "@/types";
 
 export function SearchBar() {
-  const { searchOpen, closeSearch } = useUI();
+  const { searchOpen, closeSearch, openLyrics } = useUI();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { suggestions, hasMore, isLoading, isLoadingMore, loadMore, clearSuggestions } =
@@ -146,6 +146,7 @@ placeholder="Search songs or artists…"
               onSelect={() => selectSuggestion(s)}
               onActiveChange={() => setActiveIndex(i)}
               onTogglePlay={handleTogglePlay}
+              onViewLyrics={openLyrics}
             />
           ))}
 

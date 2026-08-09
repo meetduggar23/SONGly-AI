@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Calendar, Heart, Mic, Music2, Play, Pause, RotateCcw } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -11,6 +10,7 @@ import { HeroBackground } from "@/components/feature/hero/HeroBackground";
 import { ListeningModule } from "@/components/feature/hero/ListeningModule";
 import { PLACEHOLDER_IMAGE } from "@/constants";
 import { cn } from "@/utils/cn";
+import { useUI } from "@/context/useUI";
 import type { DetectedSong, Song } from "@/types";
 
 interface DetectionResult {
@@ -31,7 +31,7 @@ function formatReleaseDate(value?: string): string | null {
 
 export function DetectPage() {
   useDocumentTitle("Detect a Song");
-  const navigate = useNavigate();
+  const { openLyrics } = useUI();
   const [result, setResult] = useState<DetectionResult | null>(null);
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
@@ -43,7 +43,6 @@ export function DetectPage() {
     phase,
     error,
     progress,
-    seconds,
     startListening,
     cancelListening,
   } = useSongRecognition(onDetected, { holdMs: 1100 });
@@ -62,16 +61,19 @@ export function DetectPage() {
 
   const handleViewLyrics = () => {
     if (!result) return;
-    const trackId = result.track?.id;
-    if (trackId && /^(\d+|it-\d+)$/.test(trackId)) {
-      navigate(`/song/${trackId}`);
-    } else {
-      navigate(
-        `/search?q=${encodeURIComponent(
-          `${result.detected.title} ${result.detected.artist}`,
-        )}`,
-      );
-    }
+    // Prefer the matched iTunes/Deezer track; fall back to the raw detection
+    // so lyrics open immediately without re-searching the song.
+    const song: Song = result.track ?? {
+      id: result.detected.songId || `detected-${result.detected.title}`,
+      title: result.detected.title,
+      artist: result.detected.artist,
+      album: result.detected.album,
+      cover: result.detected.coverUrl,
+      previewUrl: result.detected.previewUrl,
+      duration: result.detected.duration,
+      source: "itunes",
+    };
+    openLyrics(song);
   };
 
   const handleFavorite = () => {
@@ -140,7 +142,6 @@ export function DetectPage() {
           >
             <ListeningModule
               phase={phase}
-              seconds={seconds}
               progress={progress}
               onStart={startListening}
               onCancel={cancelListening}

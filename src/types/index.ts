@@ -65,6 +65,9 @@ export interface Lyrics {
   lyrics: string;
   source: "ovh" | "lrclib" | "none";
   synced?: boolean;
+  /** Raw timestamped (LRC) lyrics, kept untouched so timestamps survive for
+   *  real time-synced playback. Present only when the provider returns them. */
+  syncedLyrics?: string;
 }
 
 export interface SearchResults {

@@ -9,11 +9,13 @@ import { FeaturesSection } from "@/components/feature/landing/FeaturesSection";
 import { SearchSuggestionsDropdown } from "@/components/feature/search/SearchSuggestionsDropdown";
 import { DiscoverMusicSection } from "@/components/feature/discover/DiscoverMusicSection";
 import { navigateToSuggestion } from "@/utils/suggestionNavigation";
+import { useUI } from "@/context/useUI";
 import type { SearchSuggestion } from "@/types";
 
 export function Home() {
   useDocumentTitle();
   const navigate = useNavigate();
+  const { openLyrics } = useUI();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -113,6 +115,7 @@ export function Home() {
                 onActiveIndexChange={setActiveIndex}
                 onLoadMore={loadMore}
                 onClose={closeDropdown}
+                onViewLyrics={openLyrics}
               />
             </div>
             <button

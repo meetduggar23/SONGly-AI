@@ -2,6 +2,10 @@
  * Lightweight inline audio preview helper.
  * Plays a 30-second preview from a single shared element so only one
  * preview plays at a time — no global player UI needed.
+ *
+ * Pausing a preview keeps the shared element alive so it can be resumed from
+ * the exact same position; `getPreviewingUrl` still returns `null` while
+ * paused, so existing callers keep treating a paused preview as "not playing".
  */
 
 let currentAudio: HTMLAudioElement | null = null;
@@ -19,9 +23,16 @@ export function subscribePreview(callback: () => void): () => void {
   };
 }
 
+/** URL currently playing (not paused). */
 export function getPreviewingUrl(): string | null {
   if (!currentAudio || currentAudio.paused) return null;
   return currentAudio.src;
+}
+
+/** URL of the preview that is loaded but paused (resumable), if any. */
+export function getPreviewPausedUrl(): string | null {
+  if (currentAudio && currentAudio.paused) return currentAudio.src;
+  return null;
 }
 
 export function getPreviewProgress(): { current: number; duration: number } | null {
@@ -33,11 +44,7 @@ function clearPreview(): void {
   currentProgress = null;
 }
 
-export function playPreview(url: string): void {
-  if (!url) return;
-  stopPreview();
-  const audio = new Audio(url);
-  audio.volume = 0.7;
+function bindEvents(audio: HTMLAudioElement): void {
   audio.addEventListener("loadedmetadata", () => {
     if (currentAudio !== audio) return;
     currentProgress = { current: 0, duration: audio.duration || 0 };
@@ -54,18 +61,46 @@ export function playPreview(url: string): void {
       notify();
     }
   });
-  audio.addEventListener("pause", () => {
+}
+
+export function playPreview(url: string): void {
+  if (!url) return;
+  stopPreview();
+  const audio = new Audio(url);
+  audio.volume = 0.7;
+  bindEvents(audio);
+  void audio.play().catch(() => {
     if (currentAudio === audio) {
       clearPreview();
       notify();
     }
   });
-  void audio.play().catch(() => {
-    clearPreview();
-    notify();
-  });
   currentAudio = audio;
   currentProgress = { current: 0, duration: 0 };
+  notify();
+}
+
+/** Pause the current preview, keeping its position for a later resume. */
+export function pausePreview(): void {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    notify();
+  }
+}
+
+/** Resume the paused preview from where it left off. */
+export function resumePreview(): void {
+  if (currentAudio && currentAudio.paused) {
+    void currentAudio.play().catch(() => {});
+    notify();
+  }
+}
+
+/** Seek the playing preview to `time` seconds (ignored while paused). */
+export function seekPreview(time: number): void {
+  if (!currentAudio || currentAudio.paused) return;
+  currentAudio.currentTime = time;
+  currentProgress = { current: time, duration: currentAudio.duration || 0 };
   notify();
 }
 

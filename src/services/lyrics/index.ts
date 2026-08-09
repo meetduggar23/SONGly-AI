@@ -55,12 +55,22 @@ async function fetchFromLrcLib(
     if (results.length === 0) return null;
 
     const best = results[0];
-    const lyrics = cleanLyrics(best.syncedLyrics || best.plainLyrics);
+    const rawSynced =
+      typeof best.syncedLyrics === "string" ? best.syncedLyrics.trim() : "";
+    const rawPlain =
+      typeof best.plainLyrics === "string" ? best.plainLyrics.trim() : "";
+
+    // When the provider ships timestamped (LRC) lyrics we keep the raw text
+    // untouched in `syncedLyrics` so consumers can drive real synchronization,
+    // while `lyrics` stays the cleaned plain text for static display/download.
+    const useSynced = rawSynced.length > 0;
+    const lyrics = cleanLyrics(useSynced ? rawSynced : rawPlain);
     if (!lyrics) return null;
     return {
       lyrics,
       source: "lrclib",
-      synced: Boolean(best.syncedLyrics),
+      synced: useSynced,
+      syncedLyrics: useSynced ? rawSynced : undefined,
     };
   } catch {
     return null;

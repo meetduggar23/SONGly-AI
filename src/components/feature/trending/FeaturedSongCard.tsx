@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Pause, Play, Heart, Search, Flame } from "lucide-react";
+import { Pause, Play, Heart, FileText, Flame } from "lucide-react";
 import type { TrendingEntry } from "@/services/music/itunesService";
 import { cn } from "@/utils/cn";
 import { PLACEHOLDER_IMAGE } from "@/constants";
@@ -8,6 +7,7 @@ import { useFavoritesStore, songToFavorite } from "@/store/favorites";
 import { usePreviewPlayback } from "@/hooks/usePreviewPlayback";
 import { playPreview, stopPreview } from "@/utils/audio";
 import { toastSuccess } from "@/store/toast";
+import { useUI } from "@/context/useUI";
 
 /**
  * Featured #1 song — the top of the chart as an editorial hero. Large square
@@ -16,10 +16,10 @@ import { toastSuccess } from "@/store/toast";
  * on small screens, horizontal on larger ones.
  */
 export function FeaturedSongCard({ song }: { song: TrendingEntry }) {
-  const navigate = useNavigate();
   const { isPlaying } = usePreviewPlayback(song.previewUrl);
   const isFavorite = useFavoritesStore((s) => s.isFavorite(song.id, "song"));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const { openLyrics } = useUI();
 
   const art =
     song.coverLarge || song.coverMedium || song.cover || PLACEHOLDER_IMAGE;
@@ -40,7 +40,7 @@ export function FeaturedSongCard({ song }: { song: TrendingEntry }) {
     );
   };
 
-  const handleLyrics = () => navigate(`/song/${song.id}`);
+  const handleLyrics = () => openLyrics(song);
 
   return (
     <motion.section
@@ -130,7 +130,7 @@ export function FeaturedSongCard({ song }: { song: TrendingEntry }) {
               onClick={handleLyrics}
               className="inline-flex h-11 items-center gap-2 rounded-full bg-accent/25 px-5 text-sm font-semibold text-secondary-text transition-colors hover:bg-accent/40 hover:text-foreground"
             >
-              <Search className="h-4 w-4" />
+              <FileText className="h-4 w-4" />
               View Lyrics
             </button>
           </div>

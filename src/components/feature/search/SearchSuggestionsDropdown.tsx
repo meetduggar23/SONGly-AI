@@ -4,7 +4,7 @@ import { Loader2, Search } from "lucide-react";
 import { stopPreview, playPreview } from "@/utils/audio";
 import { SuggestionRow } from "@/components/feature/search/SuggestionRow";
 import { DiscoverMoreFooter } from "@/components/feature/search/DiscoverMoreFooter";
-import type { SearchSuggestion } from "@/types";
+import type { SearchSuggestion, Song } from "@/types";
 
 interface SearchSuggestionsDropdownProps {
   open: boolean;
@@ -17,6 +17,7 @@ interface SearchSuggestionsDropdownProps {
   onActiveIndexChange: (index: number) => void;
   onLoadMore: () => void;
   onClose: () => void;
+  onViewLyrics?: (song: Song) => void;
 }
 
 /**
@@ -38,6 +39,7 @@ export function SearchSuggestionsDropdown({
   onActiveIndexChange,
   onLoadMore,
   onClose,
+  onViewLyrics,
 }: SearchSuggestionsDropdownProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const playingRef = useRef(false);
@@ -101,6 +103,7 @@ export function SearchSuggestionsDropdown({
                       onSelect={() => onSelect(s, i)}
                       onActiveChange={() => onActiveIndexChange(i)}
                       onTogglePlay={handleTogglePlay}
+                      onViewLyrics={onViewLyrics}
                     />
                   ))}
 

@@ -180,6 +180,16 @@
 
   html {
     scroll-behavior: smooth;
+    /* Clamp horizontal overflow at the document level (matches body below). */
+    overflow-x: hidden;
+    /* Hide the document scrollbar while keeping page scrolling fully
+       functional (wheel, keyboard, touch, and scroll-drag all still work). */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Legacy Edge/IE */
+  }
+
+  html::-webkit-scrollbar {
+    display: none; /* Chromium/WebKit */
   }
 
   body {
@@ -189,9 +199,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Legacy Edge/IE */
     transition:
       background-color 0.28s ease,
       color 0.28s ease;
+  }
+
+  body::-webkit-scrollbar {
+    display: none; /* Chromium/WebKit */
   }
 
   ::selection {
@@ -291,7 +307,8 @@
   these values here.
 */
 .trending-page,
-.song-page {
+.song-page,
+.lyrics-panel {
   color-scheme: dark;
 
   --color-background: #000000;
@@ -311,7 +328,8 @@
 }
 
 .light .trending-page,
-.light .song-page {
+.light .song-page,
+.light .lyrics-panel {
   color-scheme: light;
 
   --color-background: #e1dcc9;
@@ -367,4 +385,74 @@
 
 .trending-eq span:nth-child(4) {
   animation-delay: 0.54s;
+}
+
+/* ---------------------------------------------------------------------------
+   INTERACTIVE LYRICS PANEL
+   Synced lyric lines with a soft left→right progressive reveal on the active
+   line. Previous/upcoming lines are dimmed (40%/55%) and the active line is
+   slightly larger and weighted. The reveal runs once per activation; when a
+   browser doesn't support animating the custom property, the line simply
+   appears fully highlighted — text is never left invisible.
+--------------------------------------------------------------------------- */
+
+@property --lyrics-reveal {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.lyrics-panel .lyrics-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--t-border) transparent;
+}
+.lyrics-panel .lyrics-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.lyrics-panel .lyrics-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lyrics-panel .lyrics-scroll::-webkit-scrollbar-thumb {
+  background: var(--t-border);
+  border-radius: 9999px;
+  border: none;
+}
+.lyrics-panel .lyrics-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--t-primary);
+}
+
+.lyrics-panel .lyrics-line {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    color 0.3s ease;
+}
+
+.lyrics-panel .lyrics-line--active {
+  font-weight: 600;
+  transform: scale(1.04);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary) var(--lyrics-reveal, 0%),
+    transparent var(--lyrics-reveal, 0%)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: lyrics-reveal-fill 0.5s ease-out forwards;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .lyrics-panel .lyrics-line--active {
+    color: transparent;
+  }
+}
+
+@keyframes lyrics-reveal-fill {
+  from {
+    --lyrics-reveal: 0%;
+  }
+  to {
+    --lyrics-reveal: 100%;
+  }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   getPreviewingUrl,
+  getPreviewPausedUrl,
   getPreviewProgress,
   subscribePreview,
 } from "@/utils/audio";
@@ -12,6 +13,7 @@ import {
  */
 export function usePreviewPlayback(previewUrl?: string) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState<{
     current: number;
     duration: number;
@@ -24,6 +26,7 @@ export function usePreviewPlayback(previewUrl?: string) {
       const actual = getPreviewingUrl();
       const playing = actual !== null && actual === expected;
       setIsPlaying(playing);
+      setIsPaused(!playing && getPreviewPausedUrl() === expected);
       setProgress(playing ? getPreviewProgress() : null);
     };
     sync();
@@ -31,5 +34,5 @@ export function usePreviewPlayback(previewUrl?: string) {
     return unsubscribe;
   }, [previewUrl]);
 
-  return { isPlaying, progress };
+  return { isPlaying, isPaused, progress };
 }

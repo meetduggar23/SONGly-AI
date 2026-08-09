@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { Music2, Play, Pause } from "lucide-react";
+import { Music2, Play, Pause, FileText } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { usePreviewPlayback } from "@/hooks/usePreviewPlayback";
-import type { SearchSuggestion } from "@/types";
+import type { SearchSuggestion, Song } from "@/types";
 
 /** Tiny animated equalizer shown next to the title of the playing song. */
 export function MiniEqualizer() {
@@ -33,6 +33,8 @@ interface SuggestionRowProps {
   onSelect: () => void;
   onActiveChange?: () => void;
   onTogglePlay: (previewUrl: string, isPlaying: boolean) => void;
+  /** Opens the lyrics panel for a song suggestion without navigating. */
+  onViewLyrics?: (song: Song) => void;
 }
 
 /**
@@ -48,6 +50,7 @@ export function SuggestionRow({
   onSelect,
   onActiveChange,
   onTogglePlay,
+  onViewLyrics,
 }: SuggestionRowProps) {
   const previewUrl = suggestion.song?.previewUrl;
   const { isPlaying, progress } = usePreviewPlayback(previewUrl);
@@ -58,6 +61,12 @@ export function SuggestionRow({
     e.preventDefault();
     if (!previewUrl) return;
     onTogglePlay(previewUrl, isPlaying);
+  };
+
+  const handleViewLyrics = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (suggestion.song && onViewLyrics) onViewLyrics(suggestion.song);
   };
 
   const progressPct =
@@ -137,6 +146,23 @@ export function SuggestionRow({
           ) : (
             <Play className="h-3.5 w-3.5 fill-current" />
           )}
+        </button>
+      )}
+
+      {/* View lyrics — opens the panel without re-searching the song */}
+      {suggestion.kind === "song" && suggestion.song && onViewLyrics && (
+        <button
+          type="button"
+          aria-label="View lyrics"
+          title="View lyrics"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onClick={handleViewLyrics}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-secondary-text opacity-100 transition-all duration-200 hover:bg-primary/10 hover:text-primary md:opacity-0 md:group-hover:opacity-100"
+        >
+          <FileText className="h-4 w-4" />
         </button>
       )}
 

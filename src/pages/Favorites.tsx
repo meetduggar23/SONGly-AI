@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, Music2, User, Disc3, Trash2, type LucideIcon } from "lucide-react";
+import { Heart, Music2, User, Disc3, Trash2, FileText, type LucideIcon } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useFavoritesStore } from "@/store/favorites";
 import type { FavoriteItem, Song, Album } from "@/types";
@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PLACEHOLDER_IMAGE } from "@/constants";
 import { cn } from "@/utils/cn";
+import { useUI } from "@/context/useUI";
 
 type Filter = "all" | "song" | "artist" | "album";
 
 export function Favorites() {
   useDocumentTitle("Favorites");
   const navigate = useNavigate();
+  const { openLyrics } = useUI();
   const { favorites, removeFavorite, clearFavorites } = useFavoritesStore();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -137,6 +139,16 @@ export function Favorites() {
                     </span>
                   </div>
                 </button>
+                {item.type === "song" && item.data && (
+                  <button
+                    onClick={() => openLyrics(item.data as Song)}
+                    className="shrink-0 rounded-lg p-2 text-muted opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100"
+                    aria-label="View lyrics"
+                    title="View lyrics"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     removeFavorite(item.id);

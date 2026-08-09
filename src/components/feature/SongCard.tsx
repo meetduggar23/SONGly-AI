@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, Pause, Heart, Clock } from "lucide-react";
+import { Play, Pause, Heart, Clock, FileText } from "lucide-react";
 import type { Song } from "@/types";
 import { cn } from "@/utils/cn";
 import { formatDuration } from "@/utils/format";
@@ -9,6 +9,7 @@ import { PLACEHOLDER_IMAGE } from "@/constants";
 import { useFavoritesStore, songToFavorite } from "@/store/favorites";
 import { playPreview, stopPreview, subscribePreview, getPreviewingUrl } from "@/utils/audio";
 import { toastSuccess } from "@/store/toast";
+import { useUI } from "@/context/useUI";
 
 interface SongCardProps {
   song: Song;
@@ -20,6 +21,7 @@ export function SongCard({ song, index = 0 }: SongCardProps) {
     s.isFavorite(song.id, "song"),
   );
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const { openLyrics } = useUI();
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -51,6 +53,12 @@ export function SongCard({ song, index = 0 }: SongCardProps) {
       isFavorite ? "Removed from favorites" : "Added to favorites",
       song.title,
     );
+  };
+
+  const handleLyrics = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openLyrics(song);
   };
 
   // Only Deezer tracks have numeric ids that /song/:id can load.
@@ -121,6 +129,17 @@ export function SongCard({ song, index = 0 }: SongCardProps) {
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
+            </button>
+            <button
+              onClick={handleLyrics}
+              className={cn(
+                "rounded-full p-1 transition-colors",
+                "text-muted opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-primary",
+              )}
+              aria-label="View lyrics"
+              title="View lyrics"
+            >
+              <FileText className="h-4 w-4" />
             </button>
           </div>
         </div>
