@@ -282,3 +282,89 @@
       box-shadow 0.28s ease;
   }
 }
+
+/*
+  SONGly PREMIUM PAGES — trending chart + lyrics share this scoped palette.
+  Scoped to the page so these pages can look distinct without touching the
+  rest of the app. Overrides the theme tokens for every descendant, so
+  Tailwind utilities (bg-card, text-foreground, border-border, …) resolve to
+  these values here.
+*/
+.trending-page,
+.song-page {
+  color-scheme: dark;
+
+  --color-background: #000000;
+  --color-card: #1f150c;
+  --color-secondary: #412d15;
+  --color-border: rgba(225, 220, 201, 0.12);
+  --color-foreground: #e1dcc9;
+  --color-secondary-text: rgba(225, 220, 201, 0.65);
+  --color-muted: rgba(225, 220, 201, 0.42);
+  --color-primary: #e1dcc9;
+  --color-primary-hover: #ffffff;
+  --color-primary-foreground: #0a0602;
+  --color-accent: #412d15;
+  --color-accent-foreground: #e1dcc9;
+  --color-success: #e1dcc9;
+  --color-error: #e1dcc9;
+}
+
+.light .trending-page,
+.light .song-page {
+  color-scheme: light;
+
+  --color-background: #e1dcc9;
+  --color-card: #ece7d6;
+  --color-secondary: #d8d2bd;
+  --color-border: rgba(31, 21, 12, 0.15);
+  --color-foreground: #000000;
+  --color-secondary-text: #412d15;
+  --color-muted: rgba(31, 21, 12, 0.55);
+  --color-primary: #412d15;
+  --color-primary-hover: #000000;
+  --color-primary-foreground: #e1dcc9;
+  --color-accent: #412d15;
+  --color-accent-foreground: #e1dcc9;
+  --color-success: #412d15;
+  --color-error: #412d15;
+}
+
+/* Tiny animated equalizer bars shown next to a playing track. */
+@keyframes trending-eq-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.trending-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.trending-eq span {
+  width: 3px;
+  height: 100%;
+  border-radius: 9999px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: trending-eq-bounce 1s ease-in-out infinite;
+}
+
+.trending-eq span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.trending-eq span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.trending-eq span:nth-child(4) {
+  animation-delay: 0.54s;
+}

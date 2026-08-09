@@ -17,16 +17,8 @@ const GRID_CLASSES =
  * so rotating cards never interrupt a song that's playing.
  */
 export function DiscoverMusicSection() {
-  const {
-    songs,
-    cursor,
-    isLoading,
-    paused,
-    setPaused,
-    goNext,
-    goPrev,
-    retry,
-  } = useDiscoverMusic();
+  const { songs, cursor, isLoading, paused, setPaused, goNext, goPrev, retry } =
+    useDiscoverMusic(10);
 
   const showSkeletons = isLoading && songs.length === 0;
   const rotating = isLoading && songs.length > 0;
@@ -93,7 +85,7 @@ export function DiscoverMusicSection() {
       >
         {showSkeletons ? (
           <div className={GRID_CLASSES}>
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <SongCardSkeleton key={i} />
             ))}
           </div>

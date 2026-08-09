@@ -4,6 +4,7 @@ import { Logo } from "@/components/common/Logo";
 const footerLinks = [
   { label: "Home", path: "/" },
   { label: "Listen", path: "/detect" },
+  { label: "Trending", path: "/trending" },
   { label: "Favorites", path: "/favorites" },
   { label: "About", path: "/about" },
 ];

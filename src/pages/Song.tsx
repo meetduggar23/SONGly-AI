@@ -1,22 +1,55 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, Pause, Heart, Clock, Music2, Share2 } from "lucide-react";
+import { Play, Pause, Heart, Share2, Download, Music2 } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getSong } from "@/services/deezer";
 import { getSongDetails } from "@/services/music/itunesService";
 import { getLyrics } from "@/services/lyrics";
 import type { Song as SongType, Lyrics } from "@/types";
 import { PLACEHOLDER_IMAGE } from "@/constants";
-import { formatDuration } from "@/utils/format";
 import { useFavoritesStore, songToFavorite } from "@/store/favorites";
 import { LyricsViewer } from "@/components/feature/LyricsViewer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/ui/error-state";
 import { toastSuccess } from "@/store/toast";
 import { cn } from "@/utils/cn";
-import { playPreview, stopPreview, subscribePreview, getPreviewingUrl } from "@/utils/audio";
+import { downloadLyrics } from "@/utils/download";
+import {
+  playPreview,
+  stopPreview,
+  subscribePreview,
+  getPreviewingUrl,
+} from "@/utils/audio";
+
+/** Skeleton: album art, song title, and lyric line placeholders. */
+function SongSkeleton() {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="animate-pulse">
+        <div className="h-24 w-24 rounded-2xl bg-border/40 sm:h-32 sm:w-32" />
+        <div className="mx-auto mt-5 h-7 w-48 rounded bg-border/40" />
+        <div className="mx-auto mt-2 h-4 w-32 rounded bg-border/40" />
+        <div className="mt-6 flex justify-center gap-2">
+          <div className="h-10 w-10 rounded-full bg-border/40" />
+          <div className="h-10 w-28 rounded-full bg-border/40" />
+          <div className="h-10 w-24 rounded-full bg-border/40" />
+        </div>
+      </div>
+      <div className="mt-14 w-full max-w-2xl animate-pulse space-y-4">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div
+            key={i}
+            className={cn(
+              "mx-auto h-4 rounded-full bg-border/40",
+              i % 3 === 0 ? "w-40" : i % 3 === 1 ? "w-56" : "w-48",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function SongPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,9 +59,7 @@ export function SongPage() {
   const [lyricsLoading, setLyricsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isFavorite = useFavoritesStore((s) =>
-    s.isFavorite(id || "", "song"),
-  );
+  const isFavorite = useFavoritesStore((s) => s.isFavorite(id || "", "song"));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
   useEffect(() => {
@@ -80,7 +111,8 @@ export function SongPage() {
     if (!song?.previewUrl) return;
     const unsubscribe = subscribePreview(() => {
       setIsPlaying(
-        getPreviewingUrl() === new URL(song.previewUrl!, window.location.href).href,
+        getPreviewingUrl() ===
+          new URL(song.previewUrl!, window.location.href).href,
       );
     });
     return unsubscribe;
@@ -118,115 +150,164 @@ export function SongPage() {
     }
   };
 
-  if (error) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-        <ErrorState title="Song not found" message={error} />
-      </div>
-    );
-  }
+  const handleDownload = () => {
+    if (!song || !lyrics?.lyrics) return;
+    downloadLyrics(song.title, song.artist, lyrics.lyrics);
+    toastSuccess("Lyrics downloaded", `${song.title} - ${song.artist}.txt`);
+  };
 
-  if (loading || !song) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-        <div className="animate-pulse">
-          <div className="mb-6 flex items-center gap-6">
-            <div className="h-40 w-40 rounded-2xl bg-border/50" />
-            <div className="flex-1 space-y-3">
-              <div className="h-8 w-2/3 bg-border/50 rounded" />
-              <div className="h-4 w-1/3 bg-border/50 rounded" />
-              <div className="h-4 w-1/4 bg-border/50 rounded" />
-            </div>
-          </div>
-          <div className="space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-4 bg-border/50 rounded" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const art = song
+    ? song.coverLarge || song.coverMedium || song.cover || PLACEHOLDER_IMAGE
+    : PLACEHOLDER_IMAGE;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end"
-      >
-        <img
-          src={song.coverLarge || song.coverMedium || song.cover || PLACEHOLDER_IMAGE}
-          alt={song.title}
-          className="h-40 w-40 shrink-0 rounded-2xl object-cover shadow-2xl sm:h-48 sm:w-48"
-        />
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex items-center gap-2">
-            <Badge variant="secondary">{song.source?.toUpperCase()}</Badge>
-            {song.releaseYear && <Badge variant="outline">{song.releaseYear}</Badge>}
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-5xl">
-            {song.title}
-          </h1>
-          <p className="mt-2 text-lg text-secondary-text">
-            by{" "}
-            <Link
-              to={`/artist/${encodeURIComponent(song.artist)}`}
-              className="text-primary hover:underline"
-            >
-              {song.artist}
-            </Link>
-          </p>
-          {song.album && (
-            <p className="mt-1 text-sm text-muted">
-              Album:{" "}
-              {song.albumId && /^\d+$/.test(song.albumId) ? (
-                <Link to={`/album/${song.albumId}`} className="hover:text-primary hover:underline">
-                  {song.album}
-                </Link>
-              ) : (
-                <span>{song.album}</span>
-              )}
-            </p>
-          )}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button onClick={handlePlay} disabled={!song.previewUrl} className="h-12 px-6">
-              {isPlaying ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-              {isPlaying ? "Pause" : "Play Preview"}
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleFavorite} aria-label="Favorite">
-              <Heart className={cn("h-5 w-5", isFavorite && "fill-current text-primary")} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleShare} aria-label="Share">
-              <Share2 className="h-5 w-5" />
-            </Button>
-            <span className="ml-auto flex items-center gap-1.5 text-sm text-muted">
-              <Clock className="h-4 w-4" />
-              {formatDuration(song.duration)}
-            </span>
-          </div>
+    <div className="song-page relative min-h-[calc(100vh-4rem)] overflow-x-hidden bg-background">
+      {/* Very subtle blurred artwork influence in the background. */}
+      {song && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden="true"
+        >
+          <img
+            src={art}
+            alt=""
+            className="h-full w-full scale-125 object-cover opacity-[0.06] blur-[48px]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-background/70" />
         </div>
-      </motion.div>
+      )}
 
-      {/* Lyrics */}
-      <LyricsViewer
-        title={song.title}
-        artist={song.artist}
-        lyrics={
-          lyrics || { lyrics: "", source: "none", synced: false }
-        }
-        loading={lyricsLoading}
-      />
+      <div className="relative mx-auto max-w-4xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
+        {error ? (
+          <div className="mt-4">
+            <ErrorState title="Song not found" message={error} />
+          </div>
+        ) : loading || !song ? (
+          <SongSkeleton />
+        ) : (
+          <>
+            {/* Compact song header */}
+            <motion.header
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="flex flex-col items-center text-center"
+            >
+              <div className="relative">
+                <div
+                  className="absolute -inset-8 rounded-full bg-accent/25 blur-3xl"
+                  aria-hidden="true"
+                />
+                <img
+                  src={art}
+                  alt={`${song.title} cover`}
+                  className="relative h-24 w-24 rounded-2xl object-cover shadow-[0_16px_40px_rgba(0,0,0,0.45)] ring-1 ring-foreground/10 sm:h-32 sm:w-32"
+                  loading="lazy"
+                />
+              </div>
 
-      {/* Source note */}
-      <div className="mt-6 flex items-center gap-2 text-xs text-muted">
-        <Music2 className="h-4 w-4" />
-        Lyrics provided by Lyrics.ovh &amp; LRC Lib.
+              <h1 className="mt-5 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+                {song.title}
+              </h1>
+              <p className="mt-1.5 text-base text-secondary-text">
+                <Link
+                  to={`/artist/${encodeURIComponent(song.artist)}`}
+                  className="transition-colors hover:text-foreground hover:underline"
+                >
+                  {song.artist}
+                </Link>
+              </p>
+              {song.album && (
+                <p className="mt-1 text-sm text-muted">
+                  {song.albumId && /^\d+$/.test(song.albumId) ? (
+                    <Link
+                      to={`/album/${song.albumId}`}
+                      className="transition-colors hover:text-primary hover:underline"
+                    >
+                      {song.album}
+                    </Link>
+                  ) : (
+                    <span>{song.album}</span>
+                  )}
+                </p>
+              )}
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleFavorite}
+                  aria-label="Favorite"
+                  title="Favorite"
+                >
+                  <Heart
+                    className={cn(
+                      "h-4 w-4",
+                      isFavorite && "fill-current text-primary",
+                    )}
+                  />
+                </Button>
+                <Button
+                  onClick={handlePlay}
+                  disabled={!song.previewUrl}
+                  className="h-10 px-5"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4 fill-current" />
+                  ) : (
+                    <Play className="h-4 w-4 fill-current" />
+                  )}
+                  {isPlaying ? "Pause" : "Preview"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={!lyrics?.lyrics}
+                  title="Download lyrics"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleShare}
+                  aria-label="Share"
+                  title="Share"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </motion.header>
+
+            {/* Lyrics section */}
+            <div className="mx-auto mt-12 w-full max-w-xl">
+              <div className="h-px w-full bg-border/60" aria-hidden="true" />
+              <h2 className="mt-8 text-center text-2xl font-bold tracking-tight text-foreground">
+                Lyrics
+              </h2>
+              <p className="mt-1 text-center text-sm text-secondary-text">
+                {song.title} · {song.artist}
+              </p>
+            </div>
+
+            <div className="mt-10">
+              <LyricsViewer
+                lyrics={lyrics || { lyrics: "", source: "none", synced: false }}
+                loading={lyricsLoading}
+                previewUrl={song.previewUrl}
+              />
+            </div>
+
+            {/* Source note */}
+            <div className="mt-12 flex items-center justify-center gap-2 text-xs text-muted">
+              <Music2 className="h-3.5 w-3.5" />
+              Lyrics provided by Lyrics.ovh &amp; LRC Lib.
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

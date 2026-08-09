@@ -742,3 +742,159 @@ export async function discoverSongs(
     total: pool.length,
   };
 }
+
+/**
+ * Trending charts — real Apple top-songs feeds, one per region.
+ *
+ * Unlike Home's "Discover Music" (a blended, rotating pool), the Trending page
+ * is a faithful chart: rankings come straight from Apple's RSS feed position,
+ * so the #1 entry is genuinely the top song for that storefront. The Indian
+ * storefront is the default. "Global" merges every region's chart and keeps
+ * each song's best (lowest) position — still derived from real chart data.
+ * Charts are cached for 30 minutes and re-fetched on interval / page focus,
+ * which matches Apple's ~daily feed cadence without pretending to be live.
+ */
+
+export type TrendingRegion = "IN" | "US" | "GB" | "CA" | "AU" | "GLOBAL";
+
+export interface TrendingRegionOption {
+  code: TrendingRegion;
+  label: string;
+}
+
+export const TRENDING_REGIONS: TrendingRegionOption[] = [
+  { code: "IN", label: "India" },
+  { code: "US", label: "United States" },
+  { code: "GB", label: "United Kingdom" },
+  { code: "CA", label: "Canada" },
+  { code: "AU", label: "Australia" },
+  { code: "GLOBAL", label: "Global" },
+];
+
+export interface TrendingEntry extends Song {
+  rank: number;
+  /** Positive = moved up, negative = moved down, 0 = unchanged. Absent when no prior chart exists. */
+  movement?: number;
+}
+
+export interface TrendingChart {
+  items: TrendingEntry[];
+  /** Timestamp of the source chart, when the feed provides one. */
+  fetchedAt: number | null;
+}
+
+const TRENDING_COUNTRIES = ["IN", "US", "GB", "CA", "AU"] as const;
+const TRENDING_FEED_LIMIT = 25;
+const TRENDING_CACHE_TTL_MS = 30 * 60 * 1000;
+const trendingCache = new Map<string, { chart: TrendingChart; fetchedAt: number }>();
+const previousTrendingRanks = new Map<string, Map<string, number>>();
+
+interface TrendingFeedResult {
+  songs: Song[];
+  updated: number | null;
+}
+
+/** Fetch a region's top-songs feed together with its updated timestamp. */
+async function fetchTopFeedWithMeta(
+  country: string,
+  limit: number,
+): Promise<TrendingFeedResult> {
+  const { data } = await itunesClient.get(
+    `${country}/rss/topsongs/limit=${limit}/json`,
+  );
+  const feed = data?.feed;
+  const songs = ((feed?.entry ?? []) as ITunesFeedEntry[])
+    .map(mapFeedEntry)
+    .filter((s): s is Song => s !== null);
+  if (songs.length === 0) throw new Error(`Empty top-songs feed for ${country}`);
+  const updatedLabel: unknown = feed?.updated?.label;
+  const updated =
+    typeof updatedLabel === "string" && updatedLabel
+      ? new Date(updatedLabel).getTime()
+      : null;
+  return { songs, updated: Number.isNaN(updated as number) ? null : updated };
+}
+
+async function fetchCountryTrendingChart(country: string): Promise<TrendingChart> {
+  const feed = await fetchTopFeedWithMeta(country, TRENDING_FEED_LIMIT);
+  return {
+    items: feed.songs.map((song, i) => ({ ...song, rank: i + 1 })),
+    fetchedAt: feed.updated,
+  };
+}
+
+/** Merge all regions: keep each song's best chart position, then re-rank. */
+async function fetchGlobalTrendingChart(): Promise<TrendingChart> {
+  const results = await Promise.allSettled(
+    TRENDING_COUNTRIES.map((country) =>
+      fetchTopFeedWithMeta(country, TRENDING_FEED_LIMIT),
+    ),
+  );
+  const feeds = results
+    .filter((r): r is PromiseFulfilledResult<TrendingFeedResult> => r.status === "fulfilled")
+    .map((r) => r.value);
+  if (feeds.length === 0) throw new Error("All trending feeds failed");
+
+  const best = new Map<string, { song: Song; rank: number }>();
+  for (const feed of feeds) {
+    feed.songs.forEach((song, i) => {
+      const position = i + 1;
+      const existing = best.get(song.id);
+      if (!existing || position < existing.rank) {
+        best.set(song.id, { song, rank: position });
+      }
+    });
+  }
+
+  const updated =
+    feeds.reduce<number | null>(
+      (max, f) =>
+        f.updated === null ? max : max === null ? f.updated : Math.max(max, f.updated),
+      null,
+    );
+
+  return {
+    items: [...best.values()]
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, TRENDING_FEED_LIMIT)
+      .map((entry, i) => ({ ...entry.song, rank: i + 1 })),
+    fetchedAt: updated,
+  };
+}
+
+/**
+ * Fetch the trending chart for a region (30-minute cache).
+ * Movement (↑/↓/—) is computed against the previous fetch of the same region;
+ * no movement numbers are ever invented — new entries simply show none.
+ */
+export async function fetchTrendingSongs(
+  region: TrendingRegion,
+): Promise<TrendingChart> {
+  const cached = trendingCache.get(region);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return cached.chart;
+  }
+
+  const source =
+    region === "GLOBAL"
+      ? await fetchGlobalTrendingChart()
+      : await fetchCountryTrendingChart(region);
+
+  const previousRanks = previousTrendingRanks.get(region);
+  const currentRanks = new Map<string, number>();
+  const items: TrendingEntry[] = source.items.map((song) => {
+    currentRanks.set(song.id, song.rank);
+    if (!previousRanks) return { ...song };
+    const previousRank = previousRanks.get(song.id);
+    return previousRank === undefined
+      ? { ...song }
+      : { ...song, movement: previousRank - song.rank };
+  });
+
+  previousTrendingRanks.set(region, currentRanks);
+
+  const chart: TrendingChart = { items, fetchedAt: source.fetchedAt };
+  trendingCache.set(region, { chart, fetchedAt: now });
+  return chart;
+}

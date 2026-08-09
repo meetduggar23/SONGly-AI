@@ -17,8 +17,14 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { suggestions, hasMore, isLoading, isLoadingMore, loadMore, clearSuggestions } =
-    useSearchSuggestions(searchQuery);
+  const {
+    suggestions,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    loadMore,
+    clearSuggestions,
+  } = useSearchSuggestions(searchQuery);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +72,6 @@ export function Home() {
     <div className="pb-10">
       <Hero />
 
-      <DiscoverMusicSection />
-
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Manual search */}
         <section id="manual-search" className="mt-12 scroll-mt-24">
@@ -85,13 +89,16 @@ export function Home() {
                   setDropdownOpen(e.target.value.trim().length >= 2);
                 }}
                 onFocus={() => {
-                  if (searchQuery.trim().length >= 2 && suggestions.length > 0) {
+                  if (
+                    searchQuery.trim().length >= 2 &&
+                    suggestions.length > 0
+                  ) {
                     setDropdownOpen(true);
                   }
                 }}
                 onKeyDown={handleKeyDown}
-placeholder="Search songs or artists…"
-className="h-14 w-full rounded-2xl border border-border bg-card/70 pl-12 pr-5 text-sm text-foreground backdrop-blur-md transition-all placeholder:text-muted hover:border-border focus:border-primary/50 focus:shadow-[0_0_0_4px_var(--t-accent-glow)] focus:outline-none focus:placeholder:text-foreground/60"
+                placeholder="Search songs or artists…"
+                className="h-14 w-full rounded-2xl border border-border bg-card/70 pl-12 pr-5 text-sm text-foreground backdrop-blur-md transition-all placeholder:text-muted hover:border-border focus:border-primary/50 focus:shadow-[0_0_0_4px_var(--t-accent-glow)] focus:outline-none focus:placeholder:text-foreground/60"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -110,13 +117,15 @@ className="h-14 w-full rounded-2xl border border-border bg-card/70 pl-12 pr-5 te
             </div>
             <button
               type="submit"
-className="inline-flex h-14 shrink-0 items-center rounded-2xl bg-primary px-8 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-95"
+              className="inline-flex h-14 shrink-0 items-center rounded-2xl bg-primary px-8 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-95"
             >
               Search
             </button>
           </form>
         </section>
       </div>
+
+      <DiscoverMusicSection />
 
       <HowItWorks />
       <FeaturesSection />

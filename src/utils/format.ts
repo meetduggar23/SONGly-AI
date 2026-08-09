@@ -22,6 +22,19 @@ export function formatDate(date?: string): string {
   });
 }
 
+/** Compact relative time (e.g. "just now", "5m ago", "2h ago"). Empty when absent. */
+export function timeAgo(ts?: number | null): string {
+  if (!ts || Number.isNaN(ts)) return "";
+  const diff = Math.max(0, Date.now() - ts);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "yesterday" : `${days}d ago`;
+}
+
 /** Extract year from a date string */
 export function getYear(date?: string): string {
   if (!date) return "";

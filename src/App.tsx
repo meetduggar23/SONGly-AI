@@ -21,6 +21,9 @@ const AlbumPage = lazy(() =>
 const Favorites = lazy(() =>
   import("@/pages/Favorites").then((m) => ({ default: m.Favorites })),
 );
+const Trending = lazy(() =>
+  import("@/pages/Trending").then((m) => ({ default: m.Trending })),
+);
 const About = lazy(() => import("@/pages/About").then((m) => ({ default: m.About })));
 const NotFound = lazy(() =>
   import("@/pages/NotFound").then((m) => ({ default: m.NotFound })),
@@ -91,6 +94,14 @@ export default function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <Favorites />
+            </Suspense>
+          }
+        />
+        <Route
+          path="trending"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <Trending />
             </Suspense>
           }
         />

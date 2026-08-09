@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
-import { Search, Menu, X, Home, Heart, Info, AudioLines, Moon, Sun } from "lucide-react";
+import { Search, Menu, X, Home, Heart, Info, AudioLines, TrendingUp, Moon, Sun } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Logo } from "@/components/common/Logo";
 import { useUI } from "@/context/useUI";
@@ -11,6 +11,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 const navItems = [
   { label: "Home", path: "/", icon: Home },
   { label: "Listen", path: "/detect", icon: AudioLines },
+  { label: "Trending", path: "/trending", icon: TrendingUp },
   { label: "Favorites", path: "/favorites", icon: Heart },
   { label: "About", path: "/about", icon: Info },
 ];
